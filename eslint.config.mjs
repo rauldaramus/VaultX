@@ -1,4 +1,5 @@
 import nx from '@nx/eslint-plugin';
+import importPlugin from 'eslint-plugin-import';
 
 export default [
   ...nx.configs['flat/base'],
@@ -36,6 +37,9 @@ export default [
       '**/*.cjs',
       '**/*.mjs',
     ],
+    plugins: {
+      import: importPlugin,
+    },
     rules: {
       // Code quality rules
       'no-console': 'warn',
@@ -46,7 +50,6 @@ export default [
         { argsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
 
       // Import rules
       'import/order': [

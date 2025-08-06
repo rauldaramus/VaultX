@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-const inquirer = require('inquirer');
 const { execSync } = require('child_process');
+
+const inquirer = require('inquirer');
 
 const types = [
   { value: 'feat', name: 'feat:     ✨ New feature' },
@@ -57,7 +58,7 @@ async function commit() {
         type: 'input',
         name: 'subject',
         message: 'Write a short, imperative tense description of the change:',
-        validate: function (value) {
+        validate(value) {
           if (value.length > 100) {
             return 'Subject must be 100 characters or less';
           }
