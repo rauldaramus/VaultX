@@ -1,0 +1,7 @@
+# Format check
+npm run format:check
+
+# Lint check (simple projects first)
+npx eslint apps/vaultx-web/src --max-warnings 0
+
+echo "Pre-commit checks passed"
