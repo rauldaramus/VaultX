@@ -6,18 +6,18 @@ module.exports = {
       2,
       'always',
       [
-        'feat',     // New functionality
-        'fix',      // Bug fixes
-        'docs',     // Documentation changes
-        'style',    // Format changes (spaces, commas, etc)
+        'feat', // New functionality
+        'fix', // Bug fixes
+        'docs', // Documentation changes
+        'style', // Format changes (spaces, commas, etc)
         'refactor', // Code refactoring
-        'perf',     // Performance improvements
-        'test',     // Add or fix tests
-        'build',    // Build system changes
-        'ci',       // CI configuration changes
-        'chore',    // Maintenance tasks
-        'revert'    // Revert previous commits
-      ]
+        'perf', // Performance improvements
+        'test', // Add or fix tests
+        'build', // Build system changes
+        'ci', // CI configuration changes
+        'chore', // Maintenance tasks
+        'revert', // Revert previous commits
+      ],
     ],
     // Maximum subject length
     'subject-max-length': [2, 'always', 100],
@@ -30,6 +30,6 @@ module.exports = {
     // Body should have blank line before
     'body-leading-blank': [2, 'always'],
     // Footer should have blank line before
-    'footer-leading-blank': [2, 'always']
-  }
+    'footer-leading-blank': [2, 'always'],
+  },
 };
