@@ -1,12 +1,12 @@
-"use client"
+'use client';
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Lock, LayoutDashboard } from "lucide-react"
-import { useAuth } from "@/features/auth/hooks/useAuth"
-import { CreateSecretForm } from "@/features/secrets/components/CreateSecretForm"
-import { Button } from "@/shared/components/ui/button"
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Lock, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { CreateSecretForm } from '@/features/secrets/components/CreateSecretForm';
+import { Button } from '@/shared/components/ui/button';
 
 function CreatePageHeader() {
   return (
@@ -24,7 +24,7 @@ function CreatePageHeader() {
         </Button>
       </div>
     </header>
-  )
+  );
 }
 
 function CreatePageFooter() {
@@ -32,25 +32,25 @@ function CreatePageFooter() {
     <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground">
       © VaultX 2025. All rights reserved.
     </footer>
-  )
+  );
 }
 
 export default function CreateSecretPage() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/login")
+      router.push('/login');
     }
-  }, [isLoading, isAuthenticated, router])
+  }, [isLoading, isAuthenticated, router]);
 
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <p className="text-muted-foreground">Loading...</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -65,5 +65,5 @@ export default function CreateSecretPage() {
       </main>
       <CreatePageFooter />
     </div>
-  )
+  );
 }

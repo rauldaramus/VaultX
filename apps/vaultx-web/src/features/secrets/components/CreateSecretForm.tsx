@@ -1,59 +1,100 @@
-"use client"
-import { useState } from "react"
-import type React from "react"
+'use client';
+import { useState } from 'react';
+import type React from 'react';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/components/ui/card"
-import { Button } from "@/shared/components/ui/button"
-import { Input } from "@/shared/components/ui/input"
-import { Textarea } from "@/shared/components/ui/textarea"
-import { Label } from "@/shared/components/ui/label"
-import { Switch } from "@/shared/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select"
-import { FileText, Archive, Lock, ShieldCheck, Clock, LinkIcon, EyeOff, KeyRound, UploadCloud } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { Label } from '@/shared/components/ui/label';
+import { Switch } from '@/shared/components/ui/switch';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/components/ui/tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/shared/components/ui/accordion';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
+import {
+  FileText,
+  Archive,
+  Lock,
+  ShieldCheck,
+  Clock,
+  LinkIcon,
+  EyeOff,
+  KeyRound,
+  UploadCloud,
+} from 'lucide-react';
 
 export function CreateSecretForm() {
-  const [secretContent, setSecretContent] = useState("")
-  const [expiresIn, setExpiresIn] = useState("24")
-  const [destroyAfterReading, setDestroyAfterReading] = useState(true)
-  const [passwordProtected, setPasswordProtected] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [secretContent, setSecretContent] = useState('');
+  const [expiresIn, setExpiresIn] = useState('24');
+  const [destroyAfterReading, setDestroyAfterReading] = useState(true);
+  const [passwordProtected, setPasswordProtected] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const expirationOptions: { [key: string]: string } = {
-    "1": "1 hour",
-    "24": "24 hours",
-    "168": "7 days",
-    "720": "30 days",
-  }
+    '1': '1 hour',
+    '24': '24 hours',
+    '168': '7 days',
+    '720': '30 days',
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0])
+      setSelectedFile(e.target.files[0]);
     } else {
-      setSelectedFile(null)
+      setSelectedFile(null);
     }
-  }
+  };
 
   return (
     <Card className="border-border/60 hover-lift animate-fade-in-up opacity-0">
       <CardHeader
         className="flex-row items-start gap-4 space-y-0 animate-fade-in-left opacity-0"
-        style={{ animationDelay: "0.1s" }}
+        style={{ animationDelay: '0.1s' }}
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted transition-all duration-300 hover:bg-primary/20 hover:scale-110">
           <Lock className="h-5 w-5 text-muted-foreground transition-colors duration-200 hover:text-primary" />
         </div>
         <div>
-          <CardTitle className="transition-colors duration-200 hover:text-primary">Create a Secret</CardTitle>
+          <CardTitle className="transition-colors duration-200 hover:text-primary">
+            Create a Secret
+          </CardTitle>
           <CardDescription className="transition-colors duration-200 hover:text-foreground">
             Your secret will be encrypted and only visible once.
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-2 animate-fade-in-up opacity-0" style={{ animationDelay: "0.2s" }}>
-          <Label htmlFor="title" className="flex items-center gap-2 transition-colors duration-200 hover:text-primary">
+        <div
+          className="space-y-2 animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.2s' }}
+        >
+          <Label
+            htmlFor="title"
+            className="flex items-center gap-2 transition-colors duration-200 hover:text-primary"
+          >
             <FileText className="h-4 w-4 text-muted-foreground transition-all duration-300 hover:scale-110" />
             Secret Title
           </Label>
@@ -67,14 +108,23 @@ export function CreateSecretForm() {
           </p>
         </div>
 
-        <div className="animate-fade-in-up opacity-0" style={{ animationDelay: "0.3s" }}>
+        <div
+          className="animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.3s' }}
+        >
           <Tabs defaultValue="text">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="text" className="transition-all duration-300 hover:scale-105">
+              <TabsTrigger
+                value="text"
+                className="transition-all duration-300 hover:scale-105"
+              >
                 <FileText className="mr-2 h-4 w-4 transition-transform duration-200 hover:scale-110" />
                 Text
               </TabsTrigger>
-              <TabsTrigger value="file" className="transition-all duration-300 hover:scale-105">
+              <TabsTrigger
+                value="file"
+                className="transition-all duration-300 hover:scale-105"
+              >
                 <Archive className="mr-2 h-4 w-4 transition-transform duration-200 hover:scale-110" />
                 File
               </TabsTrigger>
@@ -85,7 +135,7 @@ export function CreateSecretForm() {
                   placeholder="Write or paste your secret here..."
                   className="min-h-[120px] resize-none pr-10 transition-all duration-300 focus:scale-105 hover:border-primary/50"
                   value={secretContent}
-                  onChange={(e) => setSecretContent(e.target.value)}
+                  onChange={e => setSecretContent(e.target.value)}
                 />
                 <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground transition-all duration-300 hover:scale-110 animate-pulse-slow" />
               </div>
@@ -107,13 +157,21 @@ export function CreateSecretForm() {
                 >
                   <UploadCloud className="h-8 w-8 text-muted-foreground transition-all duration-300 hover:scale-110" />
                   <p className="text-sm text-muted-foreground mt-2 transition-colors duration-200 hover:text-foreground">
-                    {selectedFile ? selectedFile.name : "Drag and drop a file here or click to select"}
+                    {selectedFile
+                      ? selectedFile.name
+                      : 'Drag and drop a file here or click to select'}
                   </p>
-                  <Input id="file-upload" type="file" className="sr-only" onChange={handleFileChange} />
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                  />
                 </Label>
                 {selectedFile && (
                   <p className="text-xs text-muted-foreground text-center transition-colors duration-200 hover:text-foreground animate-fade-in-up">
-                    Selected file: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                    Selected file: {selectedFile.name} (
+                    {(selectedFile.size / 1024).toFixed(2)} KB)
                   </p>
                 )}
               </div>
@@ -121,37 +179,51 @@ export function CreateSecretForm() {
           </Tabs>
         </div>
 
-        <div className="animate-fade-in-up opacity-0" style={{ animationDelay: "0.4s" }}>
+        <div
+          className="animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.4s' }}
+        >
           <Accordion type="single" collapsible>
             <AccordionItem value="security-options">
               <AccordionTrigger className="text-sm font-medium transition-colors duration-200 hover:text-primary">
                 Security Options
               </AccordionTrigger>
               <AccordionContent className="space-y-6 pt-4">
-                <div className="space-y-2 animate-fade-in-left opacity-0" style={{ animationDelay: "0.5s" }}>
-                  <Label htmlFor="expires-in" className="transition-colors duration-200 hover:text-primary">
+                <div
+                  className="space-y-2 animate-fade-in-left opacity-0"
+                  style={{ animationDelay: '0.5s' }}
+                >
+                  <Label
+                    htmlFor="expires-in"
+                    className="transition-colors duration-200 hover:text-primary"
+                  >
                     Expires after
                   </Label>
                   <Select value={expiresIn} onValueChange={setExpiresIn}>
-                    <SelectTrigger id="expires-in" className="transition-all duration-300 hover:border-primary/50">
+                    <SelectTrigger
+                      id="expires-in"
+                      className="transition-all duration-300 hover:border-primary/50"
+                    >
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(expirationOptions).map(([value, label]) => (
-                        <SelectItem
-                          key={value}
-                          value={value}
-                          className="transition-colors duration-200 hover:bg-primary/10"
-                        >
-                          {label}
-                        </SelectItem>
-                      ))}
+                      {Object.entries(expirationOptions).map(
+                        ([value, label]) => (
+                          <SelectItem
+                            key={value}
+                            value={value}
+                            className="transition-colors duration-200 hover:bg-primary/10"
+                          >
+                            {label}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
                 <div
                   className="flex items-center justify-between animate-fade-in-left opacity-0"
-                  style={{ animationDelay: "0.6s" }}
+                  style={{ animationDelay: '0.6s' }}
                 >
                   <div>
                     <Label
@@ -183,7 +255,7 @@ export function CreateSecretForm() {
                 )}
                 <div
                   className="flex items-center justify-between animate-fade-in-left opacity-0"
-                  style={{ animationDelay: "0.7s" }}
+                  style={{ animationDelay: '0.7s' }}
                 >
                   <div>
                     <Label
@@ -211,7 +283,7 @@ export function CreateSecretForm() {
       </CardContent>
       <CardFooter
         className="flex flex-wrap items-center justify-between gap-2 rounded-b-lg bg-muted/50 px-6 py-4 transition-all duration-300 hover:bg-muted/70 animate-fade-in-up opacity-0"
-        style={{ animationDelay: "0.8s" }}
+        style={{ animationDelay: '0.8s' }}
       >
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {destroyAfterReading && (
@@ -231,5 +303,5 @@ export function CreateSecretForm() {
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }

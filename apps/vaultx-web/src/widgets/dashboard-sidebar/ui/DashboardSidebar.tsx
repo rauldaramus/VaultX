@@ -1,8 +1,16 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Lock, KeyRound, Code, Settings, User, LogOut } from "lucide-react"
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Lock,
+  KeyRound,
+  Code,
+  Settings,
+  User,
+  LogOut,
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -16,34 +24,34 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarTrigger,
-} from "@/shared/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar"
+} from '@/shared/components/ui/sidebar';
+import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu"
-import { useAuth } from "@/features/auth/hooks/useAuth"
+} from '@/shared/components/ui/dropdown-menu';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const navItems = [
-  { href: "/home", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/secrets", label: "My Secrets", icon: Lock },
-  { href: "/security", label: "Security", icon: KeyRound },
-  { href: "/api", label: "API", icon: Code },
-  { href: "/settings", label: "Settings", icon: Settings },
-]
+  { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/secrets', label: 'My Secrets', icon: Lock },
+  { href: '/security', label: 'Security', icon: KeyRound },
+  { href: '/api', label: 'API', icon: Code },
+  { href: '/settings', label: 'Settings', icon: Settings },
+];
 
 export function DashboardSidebar() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const { user, logout } = useAuth()
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout()
-    router.push("/") // Redirects to root, which will then redirect to /login
-  }
+    await logout();
+    router.push('/'); // Redirects to root, which will then redirect to /login
+  };
 
   return (
     <Sidebar
@@ -83,14 +91,20 @@ export function DashboardSidebar() {
 
       <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
-          
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+              {navItems.map(item => {
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + '/');
                 return (
                   <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="overflow-hidden">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.label}
+                      className="overflow-hidden"
+                    >
                       <Link href={item.href}>
                         <div className="flex items-center gap-2 min-w-0 w-full">
                           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -99,7 +113,7 @@ export function DashboardSidebar() {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )
+                );
               })}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -118,12 +132,22 @@ export function DashboardSidebar() {
                   <div className="flex w-full items-center gap-2 min-w-0">
                     <Avatar className="h-8 w-8 rounded-lg flex-shrink-0">
                       <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
-                        {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                        {user?.name
+                          ? user.name
+                              .split(' ')
+                              .map(n => n[0])
+                              .join('')
+                              .toUpperCase()
+                          : 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                      <span className="truncate font-semibold">{user?.name || 'User'}</span>
-                      <span className="truncate text-xs">{user?.email || 'user@example.com'}</span>
+                      <span className="truncate font-semibold">
+                        {user?.name || 'User'}
+                      </span>
+                      <span className="truncate text-xs">
+                        {user?.email || 'user@example.com'}
+                      </span>
                     </div>
                   </div>
                 </SidebarMenuButton>
@@ -134,7 +158,10 @@ export function DashboardSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={handleLogout}
+                >
                   <div className="flex items-center w-full min-w-0">
                     <LogOut className="mr-2 h-4 w-4 flex-shrink-0" />
                     <span className="truncate flex-1">Log out</span>
@@ -147,5 +174,5 @@ export function DashboardSidebar() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

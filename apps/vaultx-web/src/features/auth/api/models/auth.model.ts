@@ -1,143 +1,148 @@
 // Import shared API response types
-import type { ApiResponse, ValidationApiResponse } from "@vaultx/shared"
+import type { ApiResponse, ValidationApiResponse } from '@vaultx/shared';
 
 // Authentication API Request Models
 export interface LoginApiRequest {
-  email: string
-  password: string
-  rememberMe?: boolean
+  email: string;
+  password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterApiRequest {
-  email: string
-  password: string
-  name: string
-  confirmPassword: string
+  email: string;
+  password: string;
+  name: string;
+  confirmPassword: string;
 }
 
 export interface RefreshTokenApiRequest {
-  refreshToken: string
+  refreshToken: string;
 }
 
 export interface ResetPasswordApiRequest {
-  email: string
+  email: string;
 }
 
 export interface ChangePasswordApiRequest {
-  currentPassword: string
-  newPassword: string
-  confirmPassword: string
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 // Authentication API Response Models
 export interface LoginApiResponse {
-  user: UserApiModel
-  tokens: TokensApiModel
-  expiresIn: number
-  sessionId: string
+  user: UserApiModel;
+  tokens: TokensApiModel;
+  expiresIn: number;
+  sessionId: string;
 }
 
 export interface RegisterApiResponse {
-  user: UserApiModel
-  tokens: TokensApiModel
-  message: string
+  user: UserApiModel;
+  tokens: TokensApiModel;
+  message: string;
 }
 
 export interface RefreshTokenApiResponse {
-  tokens: TokensApiModel
-  expiresIn: number
+  tokens: TokensApiModel;
+  expiresIn: number;
 }
 
 export interface ResetPasswordApiResponse {
-  message: string
-  resetToken?: string
+  message: string;
+  resetToken?: string;
 }
 
 export interface ChangePasswordApiResponse {
-  message: string
-  requiresReauth: boolean
+  message: string;
+  requiresReauth: boolean;
 }
 
 // User API Model
 export interface UserApiModel {
-  id: string
-  email: string
-  name: string
-  role: UserRole
-  avatar?: string
-  emailVerified: boolean
-  createdAt: string
-  updatedAt: string
-  lastLoginAt?: string
-  preferences: UserPreferencesApiModel
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  avatar?: string;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt?: string;
+  preferences: UserPreferencesApiModel;
 }
 
 // User Preferences API Model
 export interface UserPreferencesApiModel {
-  theme: "light" | "dark" | "system"
-  language: string
-  timezone: string
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  timezone: string;
   notifications: {
-    email: boolean
-    push: boolean
-    security: boolean
-  }
-  twoFactorEnabled: boolean
+    email: boolean;
+    push: boolean;
+    security: boolean;
+  };
+  twoFactorEnabled: boolean;
 }
 
 // Tokens API Model
 export interface TokensApiModel {
-  accessToken: string
-  refreshToken: string
-  tokenType: "Bearer"
-  expiresIn: number
-  scope: string[]
+  accessToken: string;
+  refreshToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  scope: string[];
 }
 
 // Session API Model
 export interface SessionApiModel {
-  id: string
-  userId: string
-  deviceInfo: DeviceInfoApiModel
-  ipAddress: string
-  userAgent: string
-  createdAt: string
-  lastActiveAt: string
-  expiresAt: string
-  isActive: boolean
-  isCurrent?: boolean
+  id: string;
+  userId: string;
+  deviceInfo: DeviceInfoApiModel;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+  lastActiveAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  isCurrent?: boolean;
 }
 
 // Device Info API Model
 export interface DeviceInfoApiModel {
-  browser: string
-  os: string
-  device: string
-  isMobile: boolean
+  browser: string;
+  os: string;
+  device: string;
+  isMobile: boolean;
 }
 
 // User Role Enum for API
-export type UserRole = "admin" | "user" | "moderator"
+export type UserRole = 'admin' | 'user' | 'moderator';
 
 // Authentication Status Enum for API
-export type AuthStatusApi = "authenticated" | "unauthenticated" | "pending" | "expired" | "locked"
+export type AuthStatusApi =
+  | 'authenticated'
+  | 'unauthenticated'
+  | 'pending'
+  | 'expired'
+  | 'locked';
 
 // API Error Model
 export interface AuthApiError {
-  code: string
-  message: string
-  details?: Record<string, any>
-  timestamp: string
-  path: string
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  path: string;
 }
 
 // Validation Error Model
 export interface ValidationError {
-  field: string
-  message: string
-  code: string
+  field: string;
+  message: string;
+  code: string;
 }
 
 // API Response with Validation Errors
 // Re-export ValidationApiResponse from shared types for convenience
-export type { ValidationApiResponse } from "@vaultx/shared"
+export type { ValidationApiResponse } from '@vaultx/shared';

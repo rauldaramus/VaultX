@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { LockKeyhole, Eye, Clock } from "lucide-react"
-import { useDashboardData } from "../hooks/use-dashboard-data"
+import { LockKeyhole, Eye, Clock } from 'lucide-react';
+import { useDashboardData } from '../hooks/use-dashboard-data';
 
 export function SimpleTimeline() {
-  const { activity, loading } = useDashboardData()
+  const { activity, loading } = useDashboardData();
 
   if (loading) {
     return (
@@ -19,22 +19,26 @@ export function SimpleTimeline() {
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
-      case 'LockKeyhole': return LockKeyhole
-      case 'Eye': return Eye
-      case 'Clock': return Clock
-      default: return LockKeyhole
+      case 'LockKeyhole':
+        return LockKeyhole;
+      case 'Eye':
+        return Eye;
+      case 'Clock':
+        return Clock;
+      default:
+        return LockKeyhole;
     }
-  }
+  };
 
   return (
     <div className="space-y-4 mt-4">
       {activity.map((activityItem, index) => {
-        const IconComponent = getIcon(activityItem.icon)
+        const IconComponent = getIcon(activityItem.icon);
         return (
           <div key={activityItem.id} className="flex items-start gap-3">
             <div className="rounded-full p-2 mt-0.5 bg-muted">
@@ -42,14 +46,18 @@ export function SimpleTimeline() {
             </div>
             <div>
               <p className="text-sm font-medium">{activityItem.action}</p>
-              <p className="text-xs text-muted-foreground">{activityItem.timestamp}</p>
+              <p className="text-xs text-muted-foreground">
+                {activityItem.timestamp}
+              </p>
               {activityItem.description && (
-                <p className="text-xs text-muted-foreground mt-1">{activityItem.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {activityItem.description}
+                </p>
               )}
             </div>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

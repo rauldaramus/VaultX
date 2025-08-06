@@ -8,9 +8,12 @@ export default function Loading() {
       <div className="h-10 w-full bg-muted animate-pulse rounded" />
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-32 w-full bg-muted animate-pulse rounded-lg" />
+          <div
+            key={i}
+            className="h-32 w-full bg-muted animate-pulse rounded-lg"
+          />
         ))}
       </div>
     </div>
-  )
+  );
 }

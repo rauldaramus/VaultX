@@ -1,10 +1,17 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/shared/components/ui/card"
-import { Button } from "@/shared/components/ui/button"
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
 import {
   LockKeyhole,
   Eye,
@@ -16,17 +23,18 @@ import {
   Calendar,
   Shield,
   PlusCircle,
-} from "lucide-react"
-import { SimpleBarChart } from "@/features/dashboard/components/SimpleBarChart"
-import { SimplePieChart } from "@/features/dashboard/components/SimplePieChart"
-import { SimpleTimeline } from "@/features/dashboard/components/SimpleTimeline"
-import { useDashboardData } from "@/features/dashboard/hooks/use-dashboard-data"
-import { useAuthStore } from "@/features/auth/model/auth.store"
+} from 'lucide-react';
+import { SimpleBarChart } from '@/features/dashboard/components/SimpleBarChart';
+import { SimplePieChart } from '@/features/dashboard/components/SimplePieChart';
+import { SimpleTimeline } from '@/features/dashboard/components/SimpleTimeline';
+import { useDashboardData } from '@/features/dashboard/hooks/use-dashboard-data';
+import { useAuthStore } from '@/features/auth/model/auth.store';
 
 export default function DashboardHomePage() {
-  const { user } = useAuthStore()
-  const { stats, activity, recommendations, loading, error } = useDashboardData()
-  const router = useRouter()
+  const { user } = useAuthStore();
+  const { stats, activity, recommendations, loading, error } =
+    useDashboardData();
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -44,7 +52,7 @@ export default function DashboardHomePage() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -55,7 +63,7 @@ export default function DashboardHomePage() {
           <p>Please refresh the page to try again.</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -63,18 +71,19 @@ export default function DashboardHomePage() {
       {/* Header with button on the right */}
       <div
         className="flex items-center justify-between animate-fade-in-up opacity-0"
-        style={{ animationDelay: "0.1s" }}
+        style={{ animationDelay: '0.1s' }}
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight transition-colors duration-300 hover:text-primary">
             Dashboard
           </h1>
           <p className="text-muted-foreground transition-colors duration-200 hover:text-foreground">
-            Welcome, {user?.name || 'User'}. Here&apos;s a summary of your activity.
+            Welcome, {user?.name || 'User'}. Here&apos;s a summary of your
+            activity.
           </p>
         </div>
         <Button
-          onClick={() => router.push("/create")}
+          onClick={() => router.push('/create')}
           className="bg-white text-black border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all duration-300 px-4 py-2 h-auto hover:scale-105 hover-glow"
         >
           <div className="flex items-center gap-2">
@@ -86,7 +95,10 @@ export default function DashboardHomePage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.2s" }}>
+        <Card
+          className="hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.2s' }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground">
               Secrets Created
@@ -100,24 +112,32 @@ export default function DashboardHomePage() {
               {stats?.secretsCreated || 0}
             </div>
             <div className="flex items-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground">
-              {stats?.trends.secretsCreatedChange && stats.trends.secretsCreatedChange > 0 ? (
+              {stats?.trends.secretsCreatedChange &&
+              stats.trends.secretsCreatedChange > 0 ? (
                 <TrendingUp className="mr-1 h-3 w-3 text-green-500 transition-transform duration-300 hover:scale-125" />
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3 text-destructive transition-transform duration-300 hover:scale-125" />
               )}
-              <span className={`font-medium transition-colors duration-200 ${
-                stats?.trends.secretsCreatedChange && stats.trends.secretsCreatedChange > 0 
-                  ? 'text-green-500 hover:text-green-400' 
-                  : 'text-destructive hover:text-red-400'
-              }`}>
-                {stats?.trends.secretsCreatedChange > 0 ? '+' : ''}{stats?.trends.secretsCreatedChange || 0}%
+              <span
+                className={`font-medium transition-colors duration-200 ${
+                  stats?.trends.secretsCreatedChange &&
+                  stats.trends.secretsCreatedChange > 0
+                    ? 'text-green-500 hover:text-green-400'
+                    : 'text-destructive hover:text-red-400'
+                }`}
+              >
+                {stats?.trends.secretsCreatedChange > 0 ? '+' : ''}
+                {stats?.trends.secretsCreatedChange || 0}%
               </span>
               <span className="ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.3s" }}>
+        <Card
+          className="hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.3s' }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground">
               Secrets Viewed
@@ -131,24 +151,32 @@ export default function DashboardHomePage() {
               {stats?.secretsViewed || 0}
             </div>
             <div className="flex items-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground">
-              {stats?.trends.secretsViewedChange && stats.trends.secretsViewedChange > 0 ? (
+              {stats?.trends.secretsViewedChange &&
+              stats.trends.secretsViewedChange > 0 ? (
                 <TrendingUp className="mr-1 h-3 w-3 text-green-500 transition-transform duration-300 hover:scale-125" />
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3 text-destructive transition-transform duration-300 hover:scale-125" />
               )}
-              <span className={`font-medium transition-colors duration-200 ${
-                stats?.trends.secretsViewedChange && stats.trends.secretsViewedChange > 0 
-                  ? 'text-green-500 hover:text-green-400' 
-                  : 'text-destructive hover:text-red-400'
-              }`}>
-                {stats?.trends.secretsViewedChange > 0 ? '+' : ''}{stats?.trends.secretsViewedChange || 0}%
+              <span
+                className={`font-medium transition-colors duration-200 ${
+                  stats?.trends.secretsViewedChange &&
+                  stats.trends.secretsViewedChange > 0
+                    ? 'text-green-500 hover:text-green-400'
+                    : 'text-destructive hover:text-red-400'
+                }`}
+              >
+                {stats?.trends.secretsViewedChange > 0 ? '+' : ''}
+                {stats?.trends.secretsViewedChange || 0}%
               </span>
               <span className="ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.4s" }}>
+        <Card
+          className="hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.4s' }}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground">
               Active Secrets
@@ -162,24 +190,32 @@ export default function DashboardHomePage() {
               {stats?.activeSecrets || 0}
             </div>
             <div className="flex items-center text-xs text-muted-foreground transition-colors duration-200 hover:text-foreground">
-              {stats?.trends.activeSecretsChange && stats.trends.activeSecretsChange > 0 ? (
+              {stats?.trends.activeSecretsChange &&
+              stats.trends.activeSecretsChange > 0 ? (
                 <TrendingUp className="mr-1 h-3 w-3 text-green-500 transition-transform duration-300 hover:scale-125" />
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3 text-destructive transition-transform duration-300 hover:scale-125" />
               )}
-              <span className={`font-medium transition-colors duration-200 ${
-                stats?.trends.activeSecretsChange && stats.trends.activeSecretsChange > 0 
-                  ? 'text-green-500 hover:text-green-400' 
-                  : 'text-destructive hover:text-red-400'
-              }`}>
-                {stats?.trends.activeSecretsChange > 0 ? '+' : ''}{stats?.trends.activeSecretsChange || 0}%
+              <span
+                className={`font-medium transition-colors duration-200 ${
+                  stats?.trends.activeSecretsChange &&
+                  stats.trends.activeSecretsChange > 0
+                    ? 'text-green-500 hover:text-green-400'
+                    : 'text-destructive hover:text-red-400'
+                }`}
+              >
+                {stats?.trends.activeSecretsChange > 0 ? '+' : ''}
+                {stats?.trends.activeSecretsChange || 0}%
               </span>
               <span className="ml-1">from last month</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.5s" }}>
+        <Card
+          className="hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.5s' }}
+        >
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground">
               Current Plan
@@ -187,11 +223,14 @@ export default function DashboardHomePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold transition-all duration-300 hover:scale-105 hover:text-primary">
-              {stats?.plan || "On-Premise"}
+              {stats?.plan || 'On-Premise'}
             </div>
             <div className="text-xs text-muted-foreground">
-              <Link href="#" className="text-primary hover:underline transition-all duration-200 hover:text-primary/80">
-               Access to Full functionality
+              <Link
+                href="#"
+                className="text-primary hover:underline transition-all duration-200 hover:text-primary/80"
+              >
+                Access to Full functionality
               </Link>
             </div>
           </CardContent>
@@ -199,27 +238,37 @@ export default function DashboardHomePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4 hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.6s" }}>
+        <Card
+          className="lg:col-span-4 hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.6s' }}
+        >
           <CardHeader className="transition-all duration-300 hover:bg-muted/30">
-            <CardTitle className="transition-colors duration-200 hover:text-primary">Secret Activity</CardTitle>
+            <CardTitle className="transition-colors duration-200 hover:text-primary">
+              Secret Activity
+            </CardTitle>
             <CardDescription className="transition-colors duration-200 hover:text-foreground">
               Secrets created and viewed in the last 7 days
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="animate-scale-in opacity-0" style={{ animationDelay: "0.8s" }}>
+            <div
+              className="animate-scale-in opacity-0"
+              style={{ animationDelay: '0.8s' }}
+            >
               <SimpleBarChart />
             </div>
             <div className="flex items-center justify-center gap-4 text-sm mt-2">
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
-                <div
-                  key={day}
-                  className="w-8 text-center text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-110 animate-fade-in-up opacity-0"
-                  style={{ animationDelay: `${1 + index * 0.1}s` }}
-                >
-                  {day}
-                </div>
-              ))}
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
+                (day, index) => (
+                  <div
+                    key={day}
+                    className="w-8 text-center text-muted-foreground transition-all duration-300 hover:text-foreground hover:scale-110 animate-fade-in-up opacity-0"
+                    style={{ animationDelay: `${1 + index * 0.1}s` }}
+                  >
+                    {day}
+                  </div>
+                )
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between text-xs pt-4 text-muted-foreground">
@@ -234,25 +283,40 @@ export default function DashboardHomePage() {
           </CardFooter>
         </Card>
 
-        <Card className="lg:col-span-3 hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.7s" }}>
+        <Card
+          className="lg:col-span-3 hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.7s' }}
+        >
           <CardHeader className="transition-all duration-300 hover:bg-muted/30">
-            <CardTitle className="transition-colors duration-200 hover:text-primary">Secret Status</CardTitle>
+            <CardTitle className="transition-colors duration-200 hover:text-primary">
+              Secret Status
+            </CardTitle>
             <CardDescription className="transition-colors duration-200 hover:text-foreground">
               Distribution of secrets by status
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="animate-scale-in opacity-0" style={{ animationDelay: "0.9s" }}>
+            <div
+              className="animate-scale-in opacity-0"
+              style={{ animationDelay: '0.9s' }}
+            >
               <SimplePieChart />
             </div>
             <div className="flex justify-center gap-4 mt-4 flex-wrap">
               {stats?.chartData.statusDistribution.map((item, index) => (
-                <div key={item.status} className="flex items-center transition-all duration-300 hover:scale-105">
-                  <div className={`mr-2 h-3 w-3 rounded-full transition-all duration-300 hover:scale-125 ${
-                    item.status === 'Active' ? 'bg-green-300' : 
-                    item.status === 'Viewed' ? 'bg-red-300' : 
-                    'bg-yellow-300'
-                  }`}></div>
+                <div
+                  key={item.status}
+                  className="flex items-center transition-all duration-300 hover:scale-105"
+                >
+                  <div
+                    className={`mr-2 h-3 w-3 rounded-full transition-all duration-300 hover:scale-125 ${
+                      item.status === 'Active'
+                        ? 'bg-green-300'
+                        : item.status === 'Viewed'
+                        ? 'bg-red-300'
+                        : 'bg-yellow-300'
+                    }`}
+                  ></div>
                   <span className="text-sm transition-colors duration-200 hover:text-foreground">
                     {item.status} ({item.percentage}%)
                   </span>
@@ -264,15 +328,23 @@ export default function DashboardHomePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.8s" }}>
+        <Card
+          className="hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.8s' }}
+        >
           <CardHeader className="transition-all duration-300 hover:bg-muted/30">
-            <CardTitle className="transition-colors duration-200 hover:text-primary">Recent Activity</CardTitle>
+            <CardTitle className="transition-colors duration-200 hover:text-primary">
+              Recent Activity
+            </CardTitle>
             <CardDescription className="transition-colors duration-200 hover:text-foreground">
               Latest actions performed
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="animate-scale-in opacity-0" style={{ animationDelay: "1s" }}>
+            <div
+              className="animate-scale-in opacity-0"
+              style={{ animationDelay: '1s' }}
+            >
               <SimpleTimeline />
             </div>
           </CardContent>
@@ -291,7 +363,10 @@ export default function DashboardHomePage() {
           </CardFooter>
         </Card>
 
-        <Card className="hover-lift animate-fade-in-up opacity-0" style={{ animationDelay: "0.9s" }}>
+        <Card
+          className="hover-lift animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.9s' }}
+        >
           <CardHeader className="transition-all duration-300 hover:bg-muted/30">
             <CardTitle className="transition-colors duration-200 hover:text-primary">
               Security Recommendations
@@ -309,9 +384,15 @@ export default function DashboardHomePage() {
                   style={{ animationDelay: `${1.1 + index * 0.1}s` }}
                 >
                   <div className="rounded-full p-2 mt-0.5 bg-muted transition-all duration-300 hover:bg-primary/20 hover:scale-110">
-                    {recommendation.icon === 'Shield' && <Shield className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-primary" />}
-                    {recommendation.icon === 'LockKeyhole' && <LockKeyhole className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-primary" />}
-                    {recommendation.icon === 'Eye' && <Eye className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-primary" />}
+                    {recommendation.icon === 'Shield' && (
+                      <Shield className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-primary" />
+                    )}
+                    {recommendation.icon === 'LockKeyhole' && (
+                      <LockKeyhole className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-primary" />
+                    )}
+                    {recommendation.icon === 'Eye' && (
+                      <Eye className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-primary" />
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-medium transition-colors duration-200 hover:text-foreground">
@@ -326,7 +407,9 @@ export default function DashboardHomePage() {
                       className="h-auto p-0 text-xs transition-all duration-300 hover:scale-105"
                       asChild
                     >
-                      <Link href={recommendation.action.href}>{recommendation.action.label}</Link>
+                      <Link href={recommendation.action.href}>
+                        {recommendation.action.label}
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -336,5 +419,5 @@ export default function DashboardHomePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

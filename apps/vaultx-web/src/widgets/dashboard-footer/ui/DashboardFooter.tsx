@@ -1,4 +1,4 @@
-import Link from "next/link"
+import Link from 'next/link';
 
 export function DashboardFooter() {
   return (
@@ -21,5 +21,5 @@ export function DashboardFooter() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

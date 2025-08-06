@@ -1,22 +1,22 @@
-"use client"
+'use client';
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/features/auth"
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/features/auth';
 
 export default function RootPage() {
-  const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.replace("/home")
+        router.replace('/home');
       } else {
-        router.replace("/login")
+        router.replace('/login');
       }
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, isLoading, router]);
 
   // Show loading while determining authentication state
   return (
@@ -26,5 +26,5 @@ export default function RootPage() {
         <p className="text-muted-foreground">Loading...</p>
       </div>
     </div>
-  )
+  );
 }

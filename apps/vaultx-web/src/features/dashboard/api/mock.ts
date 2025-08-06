@@ -1,20 +1,30 @@
-import type { DashboardStats, ActivityLog, SecurityRecommendation } from "@vaultx/shared"
-import { createSuccessResponse, createErrorResponse, type ApiResponse } from "@vaultx/shared"
+import type {
+  DashboardStats,
+  ActivityLog,
+  SecurityRecommendation,
+} from '@vaultx/shared';
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  type ApiResponse,
+} from '@vaultx/shared';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 500): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
 
 // Mock API service for Dashboard Overview
-export const getDashboardStats = async (): Promise<ApiResponse<DashboardStats>> => {
-  await simulateDelay(600)
-  
+export const getDashboardStats = async (): Promise<
+  ApiResponse<DashboardStats>
+> => {
+  await simulateDelay(600);
+
   const stats: DashboardStats = {
     secretsCreated: 12,
     secretsViewed: 9,
     activeSecrets: 3,
-    plan: "On-Premise",
+    plan: 'On-Premise',
     trends: {
       secretsCreatedChange: 8,
       secretsViewedChange: 12,
@@ -22,115 +32,128 @@ export const getDashboardStats = async (): Promise<ApiResponse<DashboardStats>> 
     },
     chartData: {
       secretActivity: [
-        { day: "Mon", secrets: 12 },
-        { day: "Tue", secrets: 8 },
-        { day: "Wed", secrets: 15 },
-        { day: "Thu", secrets: 6 },
-        { day: "Fri", secrets: 10 },
-        { day: "Sat", secrets: 11 },
-        { day: "Sun", secrets: 14 },
+        { day: 'Mon', secrets: 12 },
+        { day: 'Tue', secrets: 8 },
+        { day: 'Wed', secrets: 15 },
+        { day: 'Thu', secrets: 6 },
+        { day: 'Fri', secrets: 10 },
+        { day: 'Sat', secrets: 11 },
+        { day: 'Sun', secrets: 14 },
       ],
       statusDistribution: [
-        { status: "Active", count: 45, percentage: 45 },
-        { status: "Viewed", count: 30, percentage: 30 },
-        { status: "Expired", count: 25, percentage: 25 },
+        { status: 'Active', count: 45, percentage: 45 },
+        { status: 'Viewed', count: 30, percentage: 30 },
+        { status: 'Expired', count: 25, percentage: 25 },
       ],
     },
-  }
-  
-  return createSuccessResponse(stats, "Dashboard statistics retrieved successfully")
-}
+  };
 
-export const getRecentActivity = async (): Promise<ApiResponse<ActivityLog[]>> => {
-  await simulateDelay(400)
-  
+  return createSuccessResponse(
+    stats,
+    'Dashboard statistics retrieved successfully'
+  );
+};
+
+export const getRecentActivity = async (): Promise<
+  ApiResponse<ActivityLog[]>
+> => {
+  await simulateDelay(400);
+
   const activities: ActivityLog[] = [
     {
-      id: "1",
-      action: "Secret created",
-      description: "API Key for Production Database",
-      timestamp: "Today, 10:30",
-      type: "create",
-      icon: "LockKeyhole",
+      id: '1',
+      action: 'Secret created',
+      description: 'API Key for Production Database',
+      timestamp: 'Today, 10:30',
+      type: 'create',
+      icon: 'LockKeyhole',
     },
     {
-      id: "2", 
-      action: "Secret viewed",
-      description: "JWT Secret for Authentication",
-      timestamp: "Yesterday, 3:45 PM",
-      type: "view",
-      icon: "Eye",
+      id: '2',
+      action: 'Secret viewed',
+      description: 'JWT Secret for Authentication',
+      timestamp: 'Yesterday, 3:45 PM',
+      type: 'view',
+      icon: 'Eye',
     },
     {
-      id: "3",
-      action: "Secret expired",
-      description: "Temporary API Token",
-      timestamp: "2 days ago",
-      type: "expire",
-      icon: "Clock",
+      id: '3',
+      action: 'Secret expired',
+      description: 'Temporary API Token',
+      timestamp: '2 days ago',
+      type: 'expire',
+      icon: 'Clock',
     },
     {
-      id: "4",
-      action: "Secret created",
-      description: "Database Connection String",
-      timestamp: "3 days ago",
-      type: "create", 
-      icon: "LockKeyhole",
+      id: '4',
+      action: 'Secret created',
+      description: 'Database Connection String',
+      timestamp: '3 days ago',
+      type: 'create',
+      icon: 'LockKeyhole',
     },
     {
-      id: "5",
-      action: "Secret viewed",
-      description: "OAuth Client Secret",
-      timestamp: "5 days ago",
-      type: "view",
-      icon: "Eye",
+      id: '5',
+      action: 'Secret viewed',
+      description: 'OAuth Client Secret',
+      timestamp: '5 days ago',
+      type: 'view',
+      icon: 'Eye',
     },
-  ]
-  
-  return createSuccessResponse(activities, "Recent activity retrieved successfully")
-}
+  ];
 
-export const getSecurityRecommendations = async (): Promise<ApiResponse<SecurityRecommendation[]>> => {
-  await simulateDelay(300)
-  
+  return createSuccessResponse(
+    activities,
+    'Recent activity retrieved successfully'
+  );
+};
+
+export const getSecurityRecommendations = async (): Promise<
+  ApiResponse<SecurityRecommendation[]>
+> => {
+  await simulateDelay(300);
+
   const recommendations: SecurityRecommendation[] = [
     {
-      id: "1",
-      title: "Enable two-factor authentication",
-      description: "Add an extra layer of security to your account.",
-      type: "security",
-      priority: "high",
+      id: '1',
+      title: 'Enable two-factor authentication',
+      description: 'Add an extra layer of security to your account.',
+      type: 'security',
+      priority: 'high',
       action: {
-        label: "Configure now",
-        href: "/security",
+        label: 'Configure now',
+        href: '/security',
       },
-      icon: "Shield",
+      icon: 'Shield',
     },
     {
-      id: "2",
-      title: "Use passwords on your secrets", 
-      description: "Add an additional layer of protection.",
-      type: "secrets",
-      priority: "medium",
+      id: '2',
+      title: 'Use passwords on your secrets',
+      description: 'Add an additional layer of protection.',
+      type: 'secrets',
+      priority: 'medium',
       action: {
-        label: "Create protected secret",
-        href: "/create",
+        label: 'Create protected secret',
+        href: '/create',
       },
-      icon: "LockKeyhole",
+      icon: 'LockKeyhole',
     },
     {
-      id: "3",
-      title: "Review your active secrets",
+      id: '3',
+      title: 'Review your active secrets',
       description: "You have 3 secrets that haven't been viewed yet.",
-      type: "review",
-      priority: "low",
+      type: 'review',
+      priority: 'low',
       action: {
-        label: "View active secrets",
-        href: "/secrets",
+        label: 'View active secrets',
+        href: '/secrets',
       },
-      icon: "Eye",
+      icon: 'Eye',
     },
-  ]
-  
-  return createSuccessResponse(recommendations, "Security recommendations retrieved successfully")
-}
+  ];
+
+  return createSuccessResponse(
+    recommendations,
+    'Security recommendations retrieved successfully'
+  );
+};

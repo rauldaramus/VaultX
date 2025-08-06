@@ -1,4 +1,4 @@
-import { LoginForm } from "@/features/auth/components/LoginForm"
+import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export default function LoginPage() {
   return (
@@ -20,14 +20,16 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-2">Welcome back</h2>
-            <p className="text-muted-foreground">Sign in to your account to continue</p>
+            <p className="text-muted-foreground">
+              Sign in to your account to continue
+            </p>
           </div>
 
           <LoginForm />
 
           <div className="mt-8 text-center text-sm text-muted-foreground">
             <p>
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an account?{' '}
               <a href="#" className="font-medium text-primary hover:underline">
                 Sign up for free
               </a>
@@ -53,5 +55,5 @@ export default function LoginPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

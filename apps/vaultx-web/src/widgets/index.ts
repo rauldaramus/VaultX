@@ -1,2 +1,2 @@
-export * from "./dashboard-sidebar"
-export * from "./dashboard-footer"
+export * from './dashboard-sidebar';
+export * from './dashboard-footer';

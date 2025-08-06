@@ -1,7 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
-import { Button } from "@/shared/components/ui/button"
-import { Eye, PlusCircle, ShieldOff, LockKeyhole, Clock } from "lucide-react"
-import { useDashboardData } from "../hooks/use-dashboard-data"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Eye, PlusCircle, ShieldOff, LockKeyhole, Clock } from 'lucide-react';
+import { useDashboardData } from '../hooks/use-dashboard-data';
 
 const iconMap = {
   create: LockKeyhole,
@@ -9,14 +14,16 @@ const iconMap = {
   expire: Clock,
   update: PlusCircle,
   delete: ShieldOff,
-}
+};
 
 export function RecentActivity() {
-  const { activity, loading } = useDashboardData()
+  const { activity, loading } = useDashboardData();
   return (
     <Card className="bg-gray-900 border-gray-800 hover-lift animate-fade-in-up opacity-0 animate-stagger-3">
       <CardHeader className="transition-all duration-300 hover:bg-gray-800/30">
-        <CardTitle className="transition-colors duration-200 hover:text-gray-200">Recent Activity</CardTitle>
+        <CardTitle className="transition-colors duration-200 hover:text-gray-200">
+          Recent Activity
+        </CardTitle>
         <p className="text-sm text-gray-400 transition-colors duration-200 hover:text-gray-300">
           Latest actions performed
         </p>
@@ -41,7 +48,9 @@ export function RecentActivity() {
         ) : (
           <div className="space-y-4">
             {activity.slice(0, 4).map((activityItem, index) => {
-              const IconComponent = iconMap[activityItem.type as keyof typeof iconMap] || LockKeyhole
+              const IconComponent =
+                iconMap[activityItem.type as keyof typeof iconMap] ||
+                LockKeyhole;
               return (
                 <div
                   key={activityItem.id}
@@ -52,13 +61,15 @@ export function RecentActivity() {
                     <IconComponent className="h-5 w-5 text-gray-400 transition-colors duration-200 hover:text-gray-300" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium transition-colors duration-200 hover:text-gray-200">{activityItem.action}</p>
+                    <p className="font-medium transition-colors duration-200 hover:text-gray-200">
+                      {activityItem.action}
+                    </p>
                     <p className="text-sm text-gray-400 transition-colors duration-200 hover:text-gray-300">
                       {activityItem.timestamp}
                     </p>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}
@@ -70,5 +81,5 @@ export function RecentActivity() {
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

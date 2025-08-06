@@ -1,1 +1,1 @@
-export { DashboardSidebar } from "./ui/DashboardSidebar"
+export { DashboardSidebar } from './ui/DashboardSidebar';

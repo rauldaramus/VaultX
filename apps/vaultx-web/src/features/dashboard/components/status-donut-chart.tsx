@@ -1,24 +1,33 @@
-"use client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts"
-import { useDashboardData } from "../hooks/use-dashboard-data"
+'use client';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { useDashboardData } from '../hooks/use-dashboard-data';
 
-const COLORS = ["#4f46e5", "#ef4444"]
+const COLORS = ['#4f46e5', '#ef4444'];
 
 export function StatusDonutChart() {
-  const { stats, loading } = useDashboardData()
-  
-  const data = stats?.chartData.statusDistribution.map(item => ({
-    name: item.status,
-    value: item.percentage
-  })) || []
-  
-  const activePercentage = data.find(item => item.name === "Active")?.value || 0
+  const { stats, loading } = useDashboardData();
+
+  const data =
+    stats?.chartData.statusDistribution.map(item => ({
+      name: item.status,
+      value: item.percentage,
+    })) || [];
+
+  const activePercentage =
+    data.find(item => item.name === 'Active')?.value || 0;
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader>
         <CardTitle>Secret Status</CardTitle>
-        <p className="text-sm text-gray-400">Distribution of secrets by status</p>
+        <p className="text-sm text-gray-400">
+          Distribution of secrets by status
+        </p>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -44,7 +53,10 @@ export function StatusDonutChart() {
                 labelLine={false}
               >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Legend iconType="circle" />
@@ -59,7 +71,14 @@ export function StatusDonutChart() {
               >
                 {activePercentage}%
               </text>
-              <text x="50%" y="60%" textAnchor="middle" dominantBaseline="middle" fill="#9ca3af" fontSize="14">
+              <text
+                x="50%"
+                y="60%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#9ca3af"
+                fontSize="14"
+              >
                 Active
               </text>
             </PieChart>
@@ -67,5 +86,5 @@ export function StatusDonutChart() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

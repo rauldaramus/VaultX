@@ -1,11 +1,17 @@
-"use client"
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
-import { Progress } from "@/shared/components/ui/progress"
-import { useApiData } from "../hooks/use-api-data"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { Progress } from '@/shared/components/ui/progress';
+import { useApiData } from '../hooks/use-api-data';
 
 export function ApiUsage() {
-  const { usage, loading, error } = useApiData()
+  const { usage, loading, error } = useApiData();
 
   if (loading) {
     return (
@@ -30,7 +36,7 @@ export function ApiUsage() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (error) {
@@ -42,17 +48,19 @@ export function ApiUsage() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!usage) {
     return (
       <Card className="mt-4">
         <CardContent className="p-6">
-          <p className="text-muted-foreground text-center">No usage data available</p>
+          <p className="text-muted-foreground text-center">
+            No usage data available
+          </p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -69,22 +77,28 @@ export function ApiUsage() {
               {usage.requestsThisMonth} / {usage.requestLimit}
             </span>
           </div>
-          <Progress 
-            value={usage.usagePercentage} 
-            className="w-full [&>div]:bg-white text-white text-white" 
+          <Progress
+            value={usage.usagePercentage}
+            className="w-full [&>div]:bg-white text-white text-white"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            {usage.remainingRequests} remaining requests • Restart: {new Date(usage.resetDate).toLocaleDateString()}
+            {usage.remainingRequests} remaining requests • Restart:{' '}
+            {new Date(usage.resetDate).toLocaleDateString()}
           </p>
         </div>
         <div>
           <h4 className="font-medium mb-2">Breakdown of usage</h4>
           <div className="space-y-2">
-            {usage.usageBreakdown.map((item) => (
-              <div key={item.action} className="flex justify-between items-center p-3 bg-muted/50 rounded-md">
+            {usage.usageBreakdown.map(item => (
+              <div
+                key={item.action}
+                className="flex justify-between items-center p-3 bg-muted/50 rounded-md"
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{item.action}</span>
-                  <span className="text-xs text-muted-foreground">({item.percentage}%)</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({item.percentage}%)
+                  </span>
                 </div>
                 <span className="text-sm font-mono">{item.count}</span>
               </div>
@@ -93,5 +107,5 @@ export function ApiUsage() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
