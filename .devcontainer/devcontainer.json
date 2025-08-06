@@ -1,0 +1,52 @@
+
+{
+	"name": "Next.js Development with SonarQube",
+	
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/devcontainers/features/git:1": {}
+	},
+	
+	"forwardPorts": [4200, 9000],
+	
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"GitHub.copilot",
+				"ms-vscode.vscode-typescript-next",
+				"bradlc.vscode-tailwindcss",
+				"SonarSource.sonarlint-vscode",
+				"Prisma.prisma",
+				"ms-azuretools.vscode-docker",
+				"alefragnani.Bookmarks",
+				"atommaterial.a-file-icon-vscode",
+				"stivo.tailwind-fold",
+				"Anthropic.claude-code"
+			]
+		}
+	},
+	
+	"postCreateCommand": "npm install",
+	
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "8gb",
+		"storage": "32gb"
+	},
+
+	"remoteUser": "node",
+	"portsAttributes": {
+		"4200": {
+			"label": "Web Client"
+		},
+		"9000": {
+			"label": "Sonarqube"
+		}
+	}
+} 
