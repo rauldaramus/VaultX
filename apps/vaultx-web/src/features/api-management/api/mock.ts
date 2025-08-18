@@ -10,12 +10,12 @@ import {
 } from '@vaultx/shared';
 
 // Simulate API delay
-const simulateDelay = (ms: number = 500): Promise<void> => {
+const simulateDelay = (ms = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
 // Mock data storage
-let mockTokens: ApiToken[] = [
+const mockTokens: ApiToken[] = [
   {
     id: 'token_1',
     name: 'Production API Token',
@@ -159,7 +159,7 @@ export const deleteApiToken = async (
 };
 
 export const getApiUsage = async (
-  period?: string
+  _period?: string
 ): Promise<ApiResponse<ApiUsageStats>> => {
   await simulateDelay(500);
 

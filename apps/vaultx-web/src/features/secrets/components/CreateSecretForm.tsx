@@ -1,39 +1,4 @@
 'use client';
-import { useState } from 'react';
-import type React from 'react';
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { Label } from '@/shared/components/ui/label';
-import { Switch } from '@/shared/components/ui/switch';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/shared/components/ui/tabs';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/shared/components/ui/accordion';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
 import {
   FileText,
   Archive,
@@ -45,6 +10,41 @@ import {
   KeyRound,
   UploadCloud,
 } from 'lucide-react';
+import { useState } from 'react';
+import type React from 'react';
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/shared/components/ui/accordion';
+import { Button } from '@/shared/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
+import { Switch } from '@/shared/components/ui/switch';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/components/ui/tabs';
+import { Textarea } from '@/shared/components/ui/textarea';
 
 export function CreateSecretForm() {
   const [secretContent, setSecretContent] = useState('');

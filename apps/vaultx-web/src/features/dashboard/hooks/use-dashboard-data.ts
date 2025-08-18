@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  getDashboardStats,
-  getRecentActivity,
-  getSecurityRecommendations,
-} from '../api/mock';
 import type {
   DashboardStats,
   ActivityLog,
   SecurityRecommendation,
 } from '@vaultx/shared';
+import { useState, useEffect } from 'react';
+
+import {
+  getDashboardStats,
+  getRecentActivity,
+  getSecurityRecommendations,
+} from '../api/mock';
 
 interface DashboardData {
   stats: DashboardStats | null;

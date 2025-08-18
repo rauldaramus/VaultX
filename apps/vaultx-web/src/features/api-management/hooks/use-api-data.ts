@@ -1,5 +1,11 @@
 'use client';
+import type {
+  ApiToken,
+  ApiUsageStats,
+  CreateTokenRequest,
+} from '@vaultx/shared';
 import { useState, useEffect, useCallback } from 'react';
+
 import {
   getApiTokens,
   getApiUsage,
@@ -8,11 +14,6 @@ import {
   deleteApiToken,
   regenerateApiToken,
 } from '../api/mock';
-import type {
-  ApiToken,
-  ApiUsageStats,
-  CreateTokenRequest,
-} from '@vaultx/shared';
 
 interface ApiData {
   tokens: ApiToken[];

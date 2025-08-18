@@ -1,5 +1,5 @@
-import { SecretsList } from '@/features/secrets/components/SecretsList';
 import { SearchSecrets } from '@/features/secrets/components/SearchSecrets';
+import { SecretsList } from '@/features/secrets/components/SecretsList';
 
 export default function SecretsPage() {
   return (

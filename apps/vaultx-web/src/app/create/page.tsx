@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Lock, LayoutDashboard } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { CreateSecretForm } from '@/features/secrets/components/CreateSecretForm';
 import { Button } from '@/shared/components/ui/button';

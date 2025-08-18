@@ -45,6 +45,7 @@ const ssoProviders = [
 export function SSOButtons() {
   const handleSSOLogin = (provider: string) => {
     // Here you would implement the SSO logic for each provider
+    // eslint-disable-next-line no-console
     console.log(`Initiating SSO login with ${provider}`);
     // For example: window.location.href = `/auth/${provider.toLowerCase()}`
   };

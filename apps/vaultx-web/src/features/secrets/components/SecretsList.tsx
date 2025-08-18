@@ -1,7 +1,8 @@
 'use client';
 
-import { SecretItem } from './SecretItem';
 import { useSecretsData } from '../hooks/use-secrets-data';
+
+import { SecretItem } from './SecretItem';
 
 export function SecretsList() {
   const { secrets, loading, error } = useSecretsData();

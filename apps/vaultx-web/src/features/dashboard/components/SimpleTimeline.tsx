@@ -1,6 +1,7 @@
 'use client';
 
 import { LockKeyhole, Eye, Clock } from 'lucide-react';
+
 import { useDashboardData } from '../hooks/use-dashboard-data';
 
 export function SimpleTimeline() {
@@ -37,7 +38,7 @@ export function SimpleTimeline() {
 
   return (
     <div className="space-y-4 mt-4">
-      {activity.map((activityItem, index) => {
+      {activity.map((activityItem, _index) => {
         const IconComponent = getIcon(activityItem.icon);
         return (
           <div key={activityItem.id} className="flex items-start gap-3">

@@ -1,13 +1,14 @@
+import { ExternalLink } from 'lucide-react';
+
+import { ApiTokens } from '@/features/api-management/components/api-tokens';
+import { ApiUsage } from '@/features/api-management/components/api-usage';
+import { Button } from '@/shared/components/ui/button';
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
 } from '@/shared/components/ui/tabs';
-import { Button } from '@/shared/components/ui/button';
-import { ExternalLink } from 'lucide-react';
-import { ApiTokens } from '@/features/api-management/components/api-tokens';
-import { ApiUsage } from '@/features/api-management/components/api-usage';
 
 export default function ApiPage() {
   return (

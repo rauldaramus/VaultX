@@ -1,12 +1,6 @@
 'use client';
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
-import {
   ArrowUp,
   ArrowDown,
   Lock,
@@ -14,7 +8,15 @@ import {
   Clock,
   ShieldCheck,
 } from 'lucide-react';
+
 import { useDashboardData } from '../hooks/use-dashboard-data';
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
 
 export function StatsCards() {
   const { stats, loading } = useDashboardData();

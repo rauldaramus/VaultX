@@ -1,6 +1,7 @@
-import type React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import type React from 'react';
+
 import './globals.css';
 import { ThemeProvider } from '@/shared/components/theme-provider';
 import { cn } from '@/shared/lib/utils';

@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { getSecuritySettings, updateSecuritySettings } from '../api/mock';
 import type { SecuritySettings } from '@vaultx/shared';
+import { useState, useEffect, useCallback } from 'react';
+
+import { getSecuritySettings, updateSecuritySettings } from '../api/mock';
 
 interface SecuritySettingsData {
   settings: SecuritySettings | null;

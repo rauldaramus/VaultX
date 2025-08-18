@@ -1,12 +1,14 @@
+import { Eye, PlusCircle, ShieldOff, LockKeyhole, Clock } from 'lucide-react';
+
+import { useDashboardData } from '../hooks/use-dashboard-data';
+
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import { Eye, PlusCircle, ShieldOff, LockKeyhole, Clock } from 'lucide-react';
-import { useDashboardData } from '../hooks/use-dashboard-data';
 
 const iconMap = {
   create: LockKeyhole,

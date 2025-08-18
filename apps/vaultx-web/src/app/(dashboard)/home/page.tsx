@@ -1,8 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import {
+  LockKeyhole,
+  Eye,
+  Clock,
+  ArrowUpRight,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Shield,
+  PlusCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
+import { useAuthStore } from '@/features/auth/model/auth.store';
+import { SimpleBarChart } from '@/features/dashboard/components/SimpleBarChart';
+import { SimplePieChart } from '@/features/dashboard/components/SimplePieChart';
+import { SimpleTimeline } from '@/features/dashboard/components/SimpleTimeline';
+import { useDashboardData } from '@/features/dashboard/hooks/use-dashboard-data';
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
@@ -11,29 +28,10 @@ import {
   CardTitle,
   CardFooter,
 } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import {
-  LockKeyhole,
-  Eye,
-  Clock,
-  ArrowUpRight,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Calendar,
-  Shield,
-  PlusCircle,
-} from 'lucide-react';
-import { SimpleBarChart } from '@/features/dashboard/components/SimpleBarChart';
-import { SimplePieChart } from '@/features/dashboard/components/SimplePieChart';
-import { SimpleTimeline } from '@/features/dashboard/components/SimpleTimeline';
-import { useDashboardData } from '@/features/dashboard/hooks/use-dashboard-data';
-import { useAuthStore } from '@/features/auth/model/auth.store';
 
 export default function DashboardHomePage() {
   const { user } = useAuthStore();
-  const { stats, activity, recommendations, loading, error } =
-    useDashboardData();
+  const { stats, recommendations, loading, error } = useDashboardData();
   const router = useRouter();
 
   if (loading) {
@@ -303,7 +301,7 @@ export default function DashboardHomePage() {
               <SimplePieChart />
             </div>
             <div className="flex justify-center gap-4 mt-4 flex-wrap">
-              {stats?.chartData.statusDistribution.map((item, index) => (
+              {stats?.chartData.statusDistribution.map((item, _index) => (
                 <div
                   key={item.status}
                   className="flex items-center transition-all duration-300 hover:scale-105"

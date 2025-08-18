@@ -1,12 +1,14 @@
 'use client';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+
+import { useDashboardData } from '../hooks/use-dashboard-data';
+
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
-import { useDashboardData } from '../hooks/use-dashboard-data';
 
 const COLORS = ['#4f46e5', '#ef4444'];
 

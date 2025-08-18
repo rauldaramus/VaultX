@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useDashboardData } from '../hooks/use-dashboard-data';
 
 export function SimplePieChart() {

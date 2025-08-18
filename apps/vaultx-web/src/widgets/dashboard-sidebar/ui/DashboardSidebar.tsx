@@ -1,23 +1,30 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Lock,
   KeyRound,
   Code,
   Settings,
-  User,
   LogOut,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -25,15 +32,6 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from '@/shared/components/ui/sidebar';
-import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const navItems = [
   { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
@@ -96,7 +94,7 @@ export function DashboardSidebar() {
               {navItems.map(item => {
                 const isActive =
                   pathname === item.href ||
-                  pathname.startsWith(item.href + '/');
+                  pathname.startsWith(`${item.href}/`);
                 return (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton

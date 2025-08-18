@@ -1,3 +1,15 @@
+import type { ApiResponse } from '@vaultx/shared';
+
+import {
+  mockUsers,
+  mockTokens,
+  mockAdminTokens,
+  mockSessions,
+  mockCredentials,
+  mockApiDelays,
+  mockErrorMessages,
+  mockSuccessMessages,
+} from '../mockData/auth.mockData';
 import type {
   LoginApiRequest,
   LoginApiResponse,
@@ -12,19 +24,6 @@ import type {
   SessionApiModel,
   ValidationApiResponse,
 } from '../models/auth.model';
-
-import type { ApiResponse } from '@vaultx/shared';
-
-import {
-  mockUsers,
-  mockTokens,
-  mockAdminTokens,
-  mockSessions,
-  mockCredentials,
-  mockApiDelays,
-  mockErrorMessages,
-  mockSuccessMessages,
-} from '../mockData/auth.mockData';
 
 // Utility function to simulate API delay
 const simulateDelay = (ms: number): Promise<void> => {
@@ -115,7 +114,7 @@ export class AuthService {
         message: mockSuccessMessages.loginSuccess,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -197,7 +196,7 @@ export class AuthService {
         message: mockSuccessMessages.registerSuccess,
         statusCode: 201,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -218,7 +217,7 @@ export class AuthService {
         message: mockSuccessMessages.logoutSuccess,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -262,7 +261,7 @@ export class AuthService {
         },
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -286,7 +285,7 @@ export class AuthService {
         data: currentUser,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -325,7 +324,7 @@ export class AuthService {
         message: mockSuccessMessages.passwordResetSent,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -370,7 +369,7 @@ export class AuthService {
         message: mockSuccessMessages.passwordChanged,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -391,7 +390,7 @@ export class AuthService {
         data: mockSessions,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -421,7 +420,7 @@ export class AuthService {
         message: 'Session revoked successfully',
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -452,7 +451,7 @@ export class AuthService {
         message: mockSuccessMessages.profileUpdated,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,
@@ -481,7 +480,7 @@ export class AuthService {
         message: mockSuccessMessages.emailVerified,
         statusCode: 200,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: mockErrorMessages.serverError,

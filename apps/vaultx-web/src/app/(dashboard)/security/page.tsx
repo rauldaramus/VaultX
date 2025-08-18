@@ -1,12 +1,11 @@
 'use client';
+import { ActiveSessionsList } from '@/features/auth/components/active-sessions-list';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@/shared/components/ui/tabs';
-import { Switch } from '@/shared/components/ui/switch';
-import { ActiveSessionsList } from '@/features/auth/components/active-sessions-list';
 
 export default function SecurityPage() {
   return (

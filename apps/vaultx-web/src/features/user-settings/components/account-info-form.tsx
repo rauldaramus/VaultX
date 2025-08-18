@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+import { useAccountSettingsData } from '../hooks/use-account-settings';
+
 import {
   Card,
   CardContent,
@@ -10,7 +13,6 @@ import {
 } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { useAccountSettingsData } from '../hooks/use-account-settings';
 
 export function AccountInfoForm() {
   const { accountInfo, loading, error, updateAccount } =
@@ -38,6 +40,7 @@ export function AccountInfoForm() {
     try {
       await updateAccount(formData);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to update account info:', error);
     } finally {
       setIsSubmitting(false);

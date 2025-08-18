@@ -10,12 +10,12 @@ import {
 } from '@vaultx/shared';
 
 // Simulate API delay
-const simulateDelay = (ms: number = 500): Promise<void> => {
+const simulateDelay = (ms = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
 // Mock data storage (simulate database)
-let mockSecrets: Secret[] = [
+const mockSecrets: Secret[] = [
   {
     id: 'secret_1',
     title: 'Production Database API Key',
@@ -150,7 +150,7 @@ export const getSecrets = async (filters?: {
 
   if (filters?.tags && filters.tags.length > 0) {
     filteredSecrets = filteredSecrets.filter(secret =>
-      filters.tags!.some((tag: string) => secret.tags.includes(tag))
+      filters.tags.some((tag: string) => secret.tags.includes(tag))
     );
   }
 

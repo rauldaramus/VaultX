@@ -1,11 +1,5 @@
 'use client';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
-import {
   Bar,
   BarChart,
   ResponsiveContainer,
@@ -13,7 +7,15 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts';
+
 import { useDashboardData } from '../hooks/use-dashboard-data';
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
 
 export function ActivityChart() {
   const { stats, loading } = useDashboardData();

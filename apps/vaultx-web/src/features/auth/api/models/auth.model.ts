@@ -1,5 +1,4 @@
 // Import shared API response types
-import type { ApiResponse, ValidationApiResponse } from '@vaultx/shared';
 
 // Authentication API Request Models
 export interface LoginApiRequest {
@@ -131,7 +130,7 @@ export type AuthStatusApi =
 export interface AuthApiError {
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp: string;
   path: string;
 }

@@ -1,12 +1,9 @@
 import type React from 'react';
-import { DashboardSidebar, DashboardFooter } from '@/widgets';
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/shared/components/ui/sidebar';
+
 import { DynamicBreadcrumb } from '@/shared/components/ui/dynamic-breadcrumb';
 import { Separator } from '@/shared/components/ui/separator';
+import { SidebarInset, SidebarProvider } from '@/shared/components/ui/sidebar';
+import { DashboardSidebar, DashboardFooter } from '@/widgets';
 
 export default function DashboardLayout({
   children,

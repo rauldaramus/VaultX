@@ -3,14 +3,10 @@ import type {
   ActivityLog,
   SecurityRecommendation,
 } from '@vaultx/shared';
-import {
-  createSuccessResponse,
-  createErrorResponse,
-  type ApiResponse,
-} from '@vaultx/shared';
+import { createSuccessResponse, type ApiResponse } from '@vaultx/shared';
 
 // Simulate API delay
-const simulateDelay = (ms: number = 500): Promise<void> => {
+const simulateDelay = (ms = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 

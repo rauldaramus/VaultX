@@ -1,5 +1,6 @@
-import { Input } from '@/shared/components/ui/input';
 import { Search } from 'lucide-react';
+
+import { Input } from '@/shared/components/ui/input';
 
 export function SearchSecrets() {
   return (

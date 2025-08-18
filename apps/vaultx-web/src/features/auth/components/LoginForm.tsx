@@ -1,15 +1,18 @@
 'use client';
 
+import type { LoginCredentials } from '@vaultx/shared';
+import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Separator } from '@/shared/components/ui/separator';
+
 import { useAuth } from '../hooks/useAuth';
-import type { LoginCredentials } from '@vaultx/shared';
+
 import { SSOButtons } from './SSOButtons';
+
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
+import { Separator } from '@/shared/components/ui/separator';
 
 export function LoginForm() {
   const [credentials, setCredentials] = useState<LoginCredentials>({

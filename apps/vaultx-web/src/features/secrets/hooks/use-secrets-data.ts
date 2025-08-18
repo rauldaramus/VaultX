@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { getSecrets, getSecretStats, getAllTags } from '../api/mock';
 import type { Secret } from '@vaultx/shared';
+import { useState, useEffect, useCallback } from 'react';
+
+import { getSecrets, getSecretStats, getAllTags } from '../api/mock';
 
 interface SecretsFilters {
   status?: string;

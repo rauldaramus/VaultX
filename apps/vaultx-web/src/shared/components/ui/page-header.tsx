@@ -1,12 +1,12 @@
 'use client';
 
-import type React from 'react';
-
-import { useBreadcrumb } from '@/shared/hooks/useBreadcrumb';
-import { DynamicBreadcrumb } from '@/shared/components/ui/dynamic-breadcrumb';
-import { Button } from '@/shared/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type React from 'react';
+
+import { Button } from '@/shared/components/ui/button';
+import { DynamicBreadcrumb } from '@/shared/components/ui/dynamic-breadcrumb';
+import { useBreadcrumb } from '@/shared/hooks/useBreadcrumb';
 import { cn } from '@/shared/lib/utils';
 
 interface PageHeaderProps {

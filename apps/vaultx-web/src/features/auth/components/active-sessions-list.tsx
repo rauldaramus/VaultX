@@ -1,5 +1,11 @@
 'use client';
 
+import { Laptop, MapPin, Wifi, XCircle } from 'lucide-react';
+
+import { useActiveSessions } from '../hooks/use-active-sessions';
+
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,10 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Laptop, MapPin, Wifi, XCircle } from 'lucide-react';
-import { useActiveSessions } from '../hooks/use-active-sessions';
 import { timeAgo } from '@/shared/lib/utils';
 
 export function ActiveSessionsList() {

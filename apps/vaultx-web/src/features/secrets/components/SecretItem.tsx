@@ -1,3 +1,8 @@
+import type { Secret } from '@vaultx/shared';
+import { QrCode, BarChart2, Share2, Lock, Eye, Clock } from 'lucide-react';
+
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
@@ -5,18 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import {
-  Copy,
-  QrCode,
-  BarChart2,
-  Share2,
-  Lock,
-  Eye,
-  Clock,
-} from 'lucide-react';
-import type { Secret } from '@vaultx/shared';
 import { cn } from '@/shared/lib/utils';
 
 export function SecretItem({ secret }: { secret: Secret }) {

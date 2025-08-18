@@ -1,8 +1,8 @@
 'use client';
 
+import type { AuthState, User } from '@vaultx/shared';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AuthState, User } from '@vaultx/shared';
 
 interface AuthStore extends AuthState {
   login: (user: User, token: string) => void;

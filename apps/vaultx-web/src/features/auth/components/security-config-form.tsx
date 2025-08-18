@@ -1,3 +1,11 @@
+import { Terminal } from 'lucide-react';
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/shared/components/ui/alert';
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
@@ -6,13 +14,6 @@ import {
   CardTitle,
 } from '@/shared/components/ui/card';
 import { Switch } from '@/shared/components/ui/switch';
-import { Button } from '@/shared/components/ui/button';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/shared/components/ui/alert';
-import { Terminal } from 'lucide-react';
 
 export function SecurityConfigForm() {
   return (

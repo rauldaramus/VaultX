@@ -129,13 +129,11 @@ export function useBreadcrumb() {
       // Get route metadata
       const routeKey = currentPath;
       let label = segment;
-      let description = '';
 
       // Check for exact match
       if (routeMetadata[routeKey as keyof typeof routeMetadata]) {
         const metadata = routeMetadata[routeKey as keyof typeof routeMetadata];
         label = metadata.label;
-        description = metadata.description;
       } else {
         // Check for dynamic route patterns
         const dynamicRouteKey = currentPath.replace(/\/[^/]+$/, '/[id]');
@@ -143,7 +141,6 @@ export function useBreadcrumb() {
           const metadata =
             routeMetadata[dynamicRouteKey as keyof typeof routeMetadata];
           label = metadata.label;
-          description = metadata.description;
         } else {
           // Fallback formatting
           label = segment

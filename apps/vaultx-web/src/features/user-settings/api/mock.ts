@@ -6,7 +6,7 @@ import {
 } from '@vaultx/shared';
 
 // Simulate API delay
-const simulateDelay = (ms: number = 500): Promise<void> => {
+const simulateDelay = (ms = 500): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
@@ -207,7 +207,9 @@ export const updateSecuritySettings = async (
 };
 
 // Active Sessions Mock (this will be moved to auth service)
-export const getActiveSessions = async (): Promise<ApiResponse<any[]>> => {
+export const getActiveSessions = async (): Promise<
+  ApiResponse<Array<Record<string, unknown>>>
+> => {
   await simulateDelay(500);
 
   const sessions = [

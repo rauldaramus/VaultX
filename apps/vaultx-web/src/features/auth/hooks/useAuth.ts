@@ -1,13 +1,14 @@
 'use client';
 
-import { useAuthStore } from '../model/auth.store';
-import { authService } from '../api/services/auth.service';
+import type { LoginCredentials } from '@vaultx/shared';
+import { useEffect } from 'react';
+
 import type {
   LoginApiRequest,
   RegisterApiRequest,
 } from '../api/models/auth.model';
-import type { LoginCredentials } from '@vaultx/shared';
-import { useEffect } from 'react';
+import { authService } from '../api/services/auth.service';
+import { useAuthStore } from '../model/auth.store';
 
 export function useAuth() {
   const { user, isAuthenticated, isLoading, login, logout, setLoading } =
@@ -30,7 +31,8 @@ export function useAuth() {
             setLoading(false);
             return;
           }
-        } catch (error) {
+        } catch {
+          // eslint-disable-next-line no-console
           console.error('Error parsing stored auth data:', error);
         }
       }
@@ -59,7 +61,7 @@ export function useAuth() {
       } else {
         return { success: false, error: response.error || 'Login failed' };
       }
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Network error' };
     } finally {
       setLoading(false);
@@ -81,7 +83,7 @@ export function useAuth() {
           validationErrors: response.validationErrors,
         };
       }
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Network error' };
     } finally {
       setLoading(false);
@@ -93,7 +95,8 @@ export function useAuth() {
     try {
       await authService.logout();
       logout();
-    } catch (error) {
+    } catch {
+      // eslint-disable-next-line no-console
       console.error('Logout error:', error);
     } finally {
       setLoading(false);
@@ -116,7 +119,8 @@ export function useAuth() {
         return true;
       }
       return false;
-    } catch (error) {
+    } catch {
+      // eslint-disable-next-line no-console
       console.error('Token refresh error:', error);
       return false;
     }

@@ -1,0 +1,29 @@
+{
+  "name": "@vaultx-monorepo/vaultx-api",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "targets": {
+      "serve": {
+        "continuous": true,
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "buildTarget": "@vaultx-monorepo/vaultx-api:build",
+          "runBuildTargetDependencies": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "@vaultx-monorepo/vaultx-api:build:development"
+          },
+          "production": {
+            "buildTarget": "@vaultx-monorepo/vaultx-api:build:production"
+          }
+        }
+      }
+    }
+  }
+}

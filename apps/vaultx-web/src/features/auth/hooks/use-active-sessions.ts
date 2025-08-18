@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { authService } from '@/features/auth/api/services/auth.service';
+
 import type { SessionApiModel } from '@/features/auth/api/models/auth.model';
+import { authService } from '@/features/auth/api/services/auth.service';
 
 export function useActiveSessions() {
   const [sessions, setSessions] = useState<SessionApiModel[]>([]);
@@ -21,6 +22,7 @@ export function useActiveSessions() {
       }
     } catch (err) {
       setError('Network error or server unreachable.');
+      // eslint-disable-next-line no-console
       console.error('Error fetching sessions:', err);
     } finally {
       setLoading(false);
@@ -40,6 +42,7 @@ export function useActiveSessions() {
         }
       } catch (err) {
         setError('Network error or server unreachable.');
+        // eslint-disable-next-line no-console
         console.error('Error revoking session:', err);
         // Revert if API call fails
         fetchSessions();

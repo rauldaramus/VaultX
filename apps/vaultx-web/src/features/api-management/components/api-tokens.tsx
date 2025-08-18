@@ -1,5 +1,15 @@
 'use client';
 
+import { Info, RefreshCw, Copy } from 'lucide-react';
+
+import { useApiData } from '../hooks/use-api-data';
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/shared/components/ui/alert';
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,14 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/shared/components/ui/alert';
-import { Info, RefreshCw, Copy, BookOpen } from 'lucide-react';
-import { useApiData } from '../hooks/use-api-data';
 import { formatDate } from '@/shared/lib/utils';
 
 export function ApiTokens() {

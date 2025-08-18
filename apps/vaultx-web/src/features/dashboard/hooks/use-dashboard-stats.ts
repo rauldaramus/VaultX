@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getDashboardStats } from '../api/mock';
 import type { DashboardStats } from '@vaultx/shared';
+import { useState, useEffect } from 'react';
+
+import { getDashboardStats } from '../api/mock';
 
 // Hook de ejemplo
 export const useDashboardStats = () => {

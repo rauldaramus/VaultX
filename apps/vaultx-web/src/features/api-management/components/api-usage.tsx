@@ -1,5 +1,7 @@
 'use client';
 
+import { useApiData } from '../hooks/use-api-data';
+
 import {
   Card,
   CardContent,
@@ -8,7 +10,6 @@ import {
   CardTitle,
 } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
-import { useApiData } from '../hooks/use-api-data';
 
 export function ApiUsage() {
   const { usage, loading, error } = useApiData();

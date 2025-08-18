@@ -1,19 +1,14 @@
+import { Shield, LockKeyhole, Eye } from 'lucide-react';
+
+import { useDashboardData } from '../hooks/use-dashboard-data';
+
+import { Button } from '@/shared/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import {
-  ShieldCheck,
-  KeyRound,
-  RefreshCw,
-  Shield,
-  LockKeyhole,
-  Eye,
-} from 'lucide-react';
-import { useDashboardData } from '../hooks/use-dashboard-data';
 
 const iconMap = {
   security: Shield,
@@ -48,7 +43,7 @@ export function SecurityRecommendations() {
             No recommendations available
           </div>
         ) : (
-          recommendations.map((rec, index) => {
+          recommendations.map((rec, _index) => {
             const IconComponent =
               iconMap[rec.type as keyof typeof iconMap] || Shield;
             return (

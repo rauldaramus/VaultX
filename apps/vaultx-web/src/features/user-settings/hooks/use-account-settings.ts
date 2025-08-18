@@ -1,12 +1,13 @@
 'use client';
+import type { AccountInfo } from '@vaultx/shared';
 import { useState, useEffect, useCallback } from 'react';
+
 import {
   getAccountInfo,
   updateAccountInfo,
   changePassword,
   deleteAccount,
 } from '../api/mock';
-import type { AccountInfo } from '@vaultx/shared';
 
 interface AccountSettingsData {
   accountInfo: AccountInfo | null;

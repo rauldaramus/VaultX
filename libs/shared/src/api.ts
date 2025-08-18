@@ -1,34 +1,34 @@
 // Shared API Response Types for consistent mock responses
 
-export interface ApiResponse<T = any> {
-  success: boolean
-  data?: T
-  message?: string
-  error?: string
-  statusCode: number
-  timestamp?: string
-  requestId?: string
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+  statusCode: number;
+  timestamp?: string;
+  requestId?: string;
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-    hasNext: boolean
-    hasPrev: boolean
-  }
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
 export interface ValidationError {
-  field: string
-  message: string
-  code: string
+  field: string;
+  message: string;
+  code: string;
 }
 
 export interface ValidationApiResponse extends ApiResponse {
-  validationErrors?: ValidationError[]
+  validationErrors?: ValidationError[];
 }
 
 // Standard error codes
@@ -48,24 +48,24 @@ export const ApiSuccessMessages = {
   UPDATED: 'Resource updated successfully',
   DELETED: 'Resource deleted successfully',
   RETRIEVED: 'Resource retrieved successfully',
-} as const
+} as const;
 
-// Standard error messages  
+// Standard error messages
 export const ApiErrorMessages = {
   VALIDATION_ERROR: 'Validation failed',
-  NOT_FOUND: 'Resource not found', 
+  NOT_FOUND: 'Resource not found',
   UNAUTHORIZED: 'Authentication required',
   FORBIDDEN: 'Access denied',
   CONFLICT: 'Resource already exists',
   INTERNAL_ERROR: 'Internal server error',
   RATE_LIMITED: 'Rate limit exceeded',
-} as const
+} as const;
 
 // Utility functions for creating standardized responses
 export const createSuccessResponse = <T>(
   data: T,
   message?: string,
-  statusCode: number = 200
+  statusCode = 200
 ): ApiResponse<T> => ({
   success: true,
   data,
@@ -73,11 +73,11 @@ export const createSuccessResponse = <T>(
   statusCode,
   timestamp: new Date().toISOString(),
   requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-})
+});
 
 export const createErrorResponse = (
   error: string,
-  statusCode: number = 500,
+  statusCode = 500,
   validationErrors?: ValidationError[]
 ): ValidationApiResponse => ({
   success: false,
@@ -86,7 +86,7 @@ export const createErrorResponse = (
   timestamp: new Date().toISOString(),
   requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   validationErrors,
-})
+});
 
 export const createPaginatedResponse = <T>(
   data: T[],
@@ -100,4 +100,4 @@ export const createPaginatedResponse = <T>(
   timestamp: new Date().toISOString(),
   requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   pagination,
-})
+});
