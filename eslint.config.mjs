@@ -6,10 +6,35 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-    ignores: ['**/dist'],
+    ignores: [
+      '**/dist',
+      '**/build',
+      '**/.next',
+      '**/node_modules',
+      '**/coverage',
+      '**/.nx',
+      '**/tmp',
+      '**/temp',
+      '**/*.min.js',
+      '**/vendor-chunks',
+      '**/middleware-build-manifest.js'
+    ],
   },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    files: [
+      'apps/**/*.ts', 
+      'apps/**/*.tsx', 
+      'apps/**/*.js', 
+      'apps/**/*.jsx',
+      'libs/**/*.ts', 
+      'libs/**/*.tsx', 
+      'libs/**/*.js', 
+      'libs/**/*.jsx',
+      '*.ts',
+      '*.tsx',
+      '*.js',
+      '*.jsx'
+    ],
     rules: {
       '@nx/enforce-module-boundaries': [
         'error',
@@ -28,14 +53,26 @@ export default [
   },
   {
     files: [
-      '**/*.ts',
-      '**/*.tsx',
-      '**/*.cts',
-      '**/*.mts',
-      '**/*.js',
-      '**/*.jsx',
-      '**/*.cjs',
-      '**/*.mjs',
+      'apps/**/*.ts',
+      'apps/**/*.tsx',
+      'apps/**/*.cts',
+      'apps/**/*.mts',
+      'apps/**/*.js',
+      'apps/**/*.jsx',
+      'apps/**/*.cjs',
+      'apps/**/*.mjs',
+      'libs/**/*.ts',
+      'libs/**/*.tsx',
+      'libs/**/*.cts',
+      'libs/**/*.mts',
+      'libs/**/*.js',
+      'libs/**/*.jsx',
+      'libs/**/*.cjs',
+      'libs/**/*.mjs',
+      '*.ts',
+      '*.tsx',
+      '*.js',
+      '*.jsx'
     ],
     plugins: {
       import: importPlugin,

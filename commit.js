@@ -91,9 +91,13 @@ async function commit() {
       fullMessage += `\n\n${answers.footer}`;
     }
 
+    // eslint-disable-next-line no-console
     console.log('\nCommit message:');
+    // eslint-disable-next-line no-console
     console.log('================');
+    // eslint-disable-next-line no-console
     console.log(fullMessage);
+    // eslint-disable-next-line no-console
     console.log('================');
 
     const confirm = await inquirer.prompt([
@@ -107,11 +111,14 @@ async function commit() {
 
     if (confirm.confirm) {
       execSync(`git commit -m "${fullMessage}"`, { stdio: 'inherit' });
+      // eslint-disable-next-line no-console
       console.log('✅ Commit successful!');
     } else {
+      // eslint-disable-next-line no-console
       console.log('❌ Commit cancelled');
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error:', error.message);
     process.exit(1);
   }
