@@ -18,7 +18,8 @@
     "prepare": "husky",
     "commit": "node commit.js",
     "commit:retry": "node commit.js",
-    "commitlint": "commitlint --edit"
+    "commitlint": "commitlint --edit",
+    "add-headers": "node scripts/add-headers.js"
   },
   "private": true,
   "dependencies": {
@@ -63,9 +64,10 @@
     "@types/react": "19.0.0",
     "@types/react-dom": "19.0.0",
     "babel-jest": "^30.0.5",
-    "eslint": "^9.8.0",
+    "eslint": "^9.34.0",
     "eslint-config-next": "^15.2.4",
     "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-jsx-a11y": "6.10.1",
     "eslint-plugin-playwright": "^1.6.2",
@@ -107,6 +109,14 @@
     "libs/*"
   ],
   "lint-staged": {
+    "apps/**/*.{js,ts,jsx,tsx}": [
+      "npm run add-headers",
+      "eslint --fix"
+    ],
+    "libs/**/*.{js,ts,jsx,tsx}": [
+      "npm run add-headers",
+      "eslint --fix"
+    ],
     "*.{js,jsx,ts,tsx,json,css,scss,md}": [
       "prettier --write"
     ],
