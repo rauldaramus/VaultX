@@ -1,5 +1,5 @@
 {
-  "name": "Next.js Development with SonarQube",
+  "name": "Next.js Development",
 
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
@@ -10,7 +10,7 @@
     "ghcr.io/devcontainers/features/git:1": {}
   },
 
-  "forwardPorts": [4200, 9000],
+  "forwardPorts": [4200],
 
   "customizations": {
     "vscode": {
@@ -20,7 +20,6 @@
         "GitHub.copilot",
         "ms-vscode.vscode-typescript-next",
         "bradlc.vscode-tailwindcss",
-        "SonarSource.sonarlint-vscode",
         "Prisma.prisma",
         "ms-azuretools.vscode-docker",
         "alefragnani.Bookmarks",
@@ -43,9 +42,6 @@
   "portsAttributes": {
     "4200": {
       "label": "Web Client"
-    },
-    "9000": {
-      "label": "Sonarqube"
     }
   }
 }
