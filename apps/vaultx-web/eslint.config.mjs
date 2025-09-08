@@ -20,4 +20,22 @@ export default [
   {
     ignores: ['.next/**/*'],
   },
+  {
+    files: [
+      'apps/vaultx-web/**/*.ts',
+      'apps/vaultx-web/**/*.tsx',
+      'apps/vaultx-web/**/*.js',
+      'apps/vaultx-web/**/*.jsx',
+    ],
+    rules: {
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          'newlines-between': 'always',
+          alphabetize: { order: 'asc', caseInsensitive: true },
+        },
+      ],
+    },
+  },
 ];

@@ -53,14 +53,6 @@ export default [
   },
   {
     files: [
-      'apps/**/*.ts',
-      'apps/**/*.tsx',
-      'apps/**/*.cts',
-      'apps/**/*.mts',
-      'apps/**/*.js',
-      'apps/**/*.jsx',
-      'apps/**/*.cjs',
-      'apps/**/*.mjs',
       'libs/**/*.ts',
       'libs/**/*.tsx',
       'libs/**/*.cts',

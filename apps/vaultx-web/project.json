@@ -55,7 +55,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/next:lint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/vaultx-web/**/*.{ts,tsx,js,jsx}"]

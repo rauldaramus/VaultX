@@ -79,7 +79,7 @@ export function ApiTokens() {
             <AlertTitle>Important Information</AlertTitle>
             <AlertDescription>
               API tokens allow you to access the VaultX API. Keep your tokens
-              secure and don't share them with anyone.
+              secure and don&apos;t share them with anyone.
             </AlertDescription>
           </Alert>
           {mainToken && (

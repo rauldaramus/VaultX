@@ -53,3 +53,8 @@ test-output
 .scannerwork/report-task.txt
 .sonarlint/connectedMode.json
 AGENTS.md
+.memory/ci-validation.md
+.memory/CLAUDE.md
+.memory/development-workflow.md
+.memory/devops-pipeline.md
+.memory/settings.local.json

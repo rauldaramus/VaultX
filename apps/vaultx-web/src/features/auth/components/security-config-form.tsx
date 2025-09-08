@@ -64,8 +64,8 @@ export function SecurityConfigForm() {
             <Terminal className="h-4 w-4 !text-yellow-300" />
             <AlertTitle>Unsupported Feature</AlertTitle>
             <AlertDescription>
-              Your current browser doesn't support screenshot protection. For
-              better security, consider using Chrome or Edge.
+              Your current browser doesn&apos;t support screenshot protection.
+              For better security, consider using Chrome or Edge.
             </AlertDescription>
           </Alert>
         </CardContent>
