@@ -1,1 +1,4 @@
+#!/usr/bin/env shxw
+
+# Run linters/formatters on staged files only
 npx lint-staged

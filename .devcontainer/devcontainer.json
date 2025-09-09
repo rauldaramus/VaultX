@@ -1,5 +1,5 @@
 {
-  "name": "Next.js Development",
+  "name": "Dev Environment for Vault X",
 
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
@@ -10,7 +10,7 @@
     "ghcr.io/devcontainers/features/git:1": {}
   },
 
-  "forwardPorts": [4200],
+  "forwardPorts": [4200, 27017, 6379],
 
   "customizations": {
     "vscode": {
@@ -25,12 +25,14 @@
         "alefragnani.Bookmarks",
         "atommaterial.a-file-icon-vscode",
         "stivo.tailwind-fold",
-        "Anthropic.claude-code"
+        "Anthropic.claude-code",
+        "openai.chatgpt"
       ]
     }
   },
 
   "postCreateCommand": "npm install",
+  "postStartCommand": "npm run dev:web",
 
   "hostRequirements": {
     "cpus": 4,
@@ -42,6 +44,12 @@
   "portsAttributes": {
     "4200": {
       "label": "Web Client"
+    },
+    "27017": {
+      "label": "MongoDB"
+    },
+    "6379": {
+      "label": "Redis"
     }
   }
 }

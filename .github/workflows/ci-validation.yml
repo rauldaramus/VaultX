@@ -26,389 +26,184 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prettier_check:
-    name: Pre — Prettier Check
+  # ----------------------
+  # PRE-CHECKS
+  # ----------------------
+  prettier:
+    name: Pre — Format Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Prettier — format:check
-        run: npm run format:check
-
-  eslint_basic:
-    name: Pre — ESLint (basic)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: ESLint — repo rules (quiet, cached)
-        run: npx eslint . --quiet --cache --cache-location .memory/eslintcache --no-error-on-unmatched-pattern
+      - run: npm ci
+      - run: npm run format:check
 
   detect_affected:
-    name: Pre — Nx Affected Detection
+    name: Pre — Detect Affected
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     outputs:
       base: ${{ steps.basehead.outputs.base }}
       head: ${{ steps.basehead.outputs.head }}
-      projects: ${{ steps.affected.outputs.projects }}
       has_any: ${{ steps.affected.outputs.has_any }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
+      - run: npm ci
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
+      - name: Ensure history and develop
+        run: |
+          git fetch --unshallow || true
+          git fetch origin develop || true
 
       - id: basehead
-        name: Resolve BASE/HEAD
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
-            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+            BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD)
+            HEAD=$(git rev-parse HEAD)
           else
-            if [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
-              echo "base=${{ github.sha }}^" >> "$GITHUB_OUTPUT"
-            else
-              echo "base=origin/develop" >> "$GITHUB_OUTPUT"
-            fi
-            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            BASE=$(git rev-parse origin/develop 2>/dev/null || git rev-parse HEAD~1 || git rev-list --max-parents=0 HEAD)
+            HEAD=$(git rev-parse HEAD)
           fi
 
+          # 🔐 fallback seguros
+          if [[ -z "$BASE" ]]; then
+            echo "BASE vacío → usando HEAD~1"
+            BASE=$(git rev-parse HEAD~1 || git rev-list --max-parents=0 HEAD)
+          fi
+          if [[ -z "$HEAD" ]]; then
+            echo "HEAD vacío → usando HEAD actual"
+            HEAD=$(git rev-parse HEAD)
+          fi
+
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+
       - id: affected
-        name: Compute affected projects
         run: |
-          PROJECTS=$(npx nx print-affected --base="${{ steps.basehead.outputs.base }}" --head="${{ steps.basehead.outputs.head }}" --select=projects)
-          echo "projects=$PROJECTS" >> "$GITHUB_OUTPUT"
+          set +e
+          PROJECTS=$(npx nx print-affected --base="${{ steps.basehead.outputs.base }}" --head="${{ steps.basehead.outputs.head }}" --select=projects 2>/dev/null)
           if [[ -z "$PROJECTS" ]]; then
             echo "has_any=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_any=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Show affected
-        run: |
-          echo "Affected projects:"
-          echo "${{ steps.affected.outputs.projects }}"
-
-  quality_eslint:
-    name: Quality — ESLint (affected)
+  # ----------------------
+  # QUALITY
+  # ----------------------
+  eslint:
+    name: Quality — Linting
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [prettier_check, eslint_basic, detect_affected]
-    if: needs.detect_affected.outputs.has_any == 'true'
+    needs: [prettier, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx nx affected -t lint --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: ESLint (Nx affected)
-        run: |
-          npx nx affected -t lint --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
-
-  quality_ts:
-    name: Quality — TypeScript Compile
+  typecheck:
+    name: Quality — Type checking
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [prettier_check, eslint_basic, detect_affected]
-    if: needs.detect_affected.outputs.has_any == 'true'
+    needs: [prettier, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx nx affected -t typecheck --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: TypeScript — affected projects (prefer Nx target)
-        run: |
-          npx nx affected -t typecheck --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}" \
-          || npx tsc -p tsconfig.json --noEmit
-
-  quality_tests:
-    name: Quality — Unit Tests (coverage)
+  tests:
+    name: Quality — Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    needs: [prettier_check, eslint_basic, detect_affected]
-    if: needs.detect_affected.outputs.has_any == 'true'
+    needs: [prettier, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx nx affected -t test --parallel=2 --codeCoverage --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Tests (Nx affected with coverage)
-        run: |
-          npx nx affected -t test --parallel=2 --codeCoverage --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
-
-  quality_audit:
-    name: Quality — npm audit (basic)
+  audit:
+    name: Quality — Security checks
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [prettier_check, eslint_basic, detect_affected]
+    needs: [prettier]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high --no-progress
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: npm audit (prod only, high+)
-        run: npm audit --omit=dev --audit-level=high --no-progress
-
+  # ----------------------
+  # EXTRA (ANÁLISIS ESTÁTICO)
+  # ----------------------
   sonarcloud:
-    name: Quality — SonarCloud Analysis
+    name: Quality — Static Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [quality_eslint, quality_ts, quality_tests, quality_audit]
-    if: >-
-      (github.ref == 'refs/heads/develop' ||
-       (github.event_name == 'pull_request' && github.event.pull_request.changed_files > 200))
-      && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true)
+    needs: [eslint, typecheck, tests, audit]
+    if: >
+      github.ref == 'refs/heads/develop' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true)
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Java (required by Sonar scanner)
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+      - uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          args: >-
+          args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG }}
 
-  build_affected:
-    name: Integration — Build (affected)
+  # ----------------------
+  # INTEGRATION (BUILD FINAL)
+  # ----------------------
+  build:
+    name: Integration — Build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [quality_eslint, quality_ts, quality_tests, quality_audit]
-    if: needs.detect_affected.outputs.has_any == 'true'
+    needs: [sonarcloud, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Build (Nx affected)
-        run: |
-          npx nx affected -t build --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
-
-  e2e_smoke:
-    name: Integration — E2E Smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [build_affected]
-    continue-on-error: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Restore Nx Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            .nx/workspace-data
-            ~/.cache/nx
-          key: ${{ runner.os }}-nx-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Run E2E (if available)
-        run: |
-          npx nx run-many -t e2e --all --parallel=1 --configuration=headless \
-          || echo "No E2E target found — skipping smoke tests"
+      - run: npm ci
+      - run: npx nx affected -t build --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"

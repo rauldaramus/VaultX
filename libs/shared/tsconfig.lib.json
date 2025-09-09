@@ -6,8 +6,7 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    // Inherit ESM settings from tsconfig.base (module: esnext, moduleResolution: bundler)
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },

@@ -3,10 +3,35 @@ version: '3.8'
 services:
   # Development container
   app:
-    container_name: nextjs_dev
+    container_name: web_client
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
       - ../..:/workspaces:cached
     command: sleep infinity
+    depends_on:
+      - mongodb
+      - redis
+
+  # MongoDB service with persisted data
+  mongodb:
+    image: mongo:7
+    container_name: dev_mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./data/mongodb/db:/data/db
+      - ./data/mongodb/configdb:/data/configdb
+
+  # Redis service with AOF persistence
+  redis:
+    image: redis:7-alpine
+    container_name: dev_redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./data/redis:/data

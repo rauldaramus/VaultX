@@ -58,3 +58,10 @@ AGENTS.md
 .memory/development-workflow.md
 .memory/devops-pipeline.md
 .memory/settings.local.json
+
+# Devcontainer persisted data (databases)
+.devcontainer/data/
+docs/CLAUDE.md
+docs/gitflow.md
+docs/mockup.png
+docs/SRS.md
