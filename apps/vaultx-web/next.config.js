@@ -30,7 +30,57 @@ const { composePlugins, withNx } = require('@nx/next');
 const nextConfig = {
   // Use this to set Nx-specific options
   // See: https://nx.dev/recipes/next/next-config-setup
-  nx: {},
+  nx: {
+    svgr: false,
+  },
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: [
+          {
+            loader: '@svgr/webpack',
+            options: {
+              prettier: false,
+              svgo: true,
+              svgoConfig: {
+                plugins: [{ removeViewBox: false }],
+              },
+              titleProp: true,
+            },
+          },
+        ],
+        as: '*.js',
+      },
+    },
+  },
+  webpack(config) {
+    const fileLoaderRule = config.module.rules.find(
+      rule => rule.test && rule.test.test && rule.test.test('.svg')
+    );
+
+    if (fileLoaderRule) {
+      fileLoaderRule.exclude = /\.svg$/i;
+    }
+
+    config.module.rules.push({
+      test: /\.svg$/i,
+      use: [
+        {
+          loader: '@svgr/webpack',
+          options: {
+            prettier: false,
+            svgo: true,
+            svgoConfig: {
+              plugins: [{ removeViewBox: false }],
+            },
+            titleProp: true,
+          },
+        },
+      ],
+    });
+
+    return config;
+  },
 };
 
 const plugins = [
