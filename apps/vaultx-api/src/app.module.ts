@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: app.module.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,26 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+import { configuration, validationSchema } from './config';
+import { HealthModule } from './health/health.module';
+import { RedisModule } from './infrastructure/cache/redis.module';
+import { DatabaseModule } from './infrastructure/database/database.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
-
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
-
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+      validationSchema,
+    }),
+    TelemetryModule,
+    DatabaseModule,
+    RedisModule,
+    HealthModule,
+  ],
+})
+export class AppModule {}

@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: mongo.health.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,34 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import { Injectable } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import {
+  HealthCheckError,
+  HealthIndicator,
+  HealthIndicatorResult,
+} from '@nestjs/terminus';
+import type { Connection } from 'mongoose';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+@Injectable()
+export class MongoHealthIndicator extends HealthIndicator {
+  constructor(
+    @InjectConnection()
+    private readonly connection: Connection
+  ) {
+    super();
+  }
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+  async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    const state = this.connection.readyState;
+    const isHealthy = state === 1; // 1 === connected
 
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
+    if (isHealthy) {
+      return this.getStatus(key, true, { state });
+    }
 
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
+    throw new HealthCheckError('MongoDB connection is not ready', {
+      state,
+    });
+  }
 }

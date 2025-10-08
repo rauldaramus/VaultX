@@ -68,3 +68,4 @@ docs/SRS.md
 .memory/DEVOPS.md
 .memory/SRS.md
 .memory/*
+apps/vaultx-api/src/main.ts

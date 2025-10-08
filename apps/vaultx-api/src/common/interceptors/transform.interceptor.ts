@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: transform.interceptor.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,37 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import type { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+interface SuccessResponse<T> {
+  data: T;
+  timestamp: string;
+  path: string;
+}
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+@Injectable()
+export class TransformInterceptor<T>
+  implements NestInterceptor<T, SuccessResponse<T>>
+{
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<T>
+  ): Observable<SuccessResponse<T>> {
+    const request = context.switchToHttp().getRequest();
 
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
-
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
+    return next.handle().pipe(
+      map(data => ({
+        data,
+        timestamp: new Date().toISOString(),
+        path: request.url,
+      }))
+    );
+  }
 }

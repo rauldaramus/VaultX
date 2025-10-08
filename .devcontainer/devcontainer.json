@@ -1,5 +1,5 @@
 {
-  "name": "Dev Environment for Vault X",
+  "name": "Dev Environment for VaultX",
 
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
@@ -10,7 +10,7 @@
     "ghcr.io/devcontainers/features/git:1": {}
   },
 
-  "forwardPorts": [4200, 27017, 6379],
+  "forwardPorts": [4200, 27017, 6379, 3000],
 
   "customizations": {
     "vscode": {
@@ -43,13 +43,16 @@
   "remoteUser": "node",
   "portsAttributes": {
     "4200": {
-      "label": "Web Client"
+      "label": "UI:Web Client"
+    },
+    "3000": {
+      "label": "API"
     },
     "27017": {
-      "label": "MongoDB"
+      "label": "DB:MongoDB"
     },
     "6379": {
-      "label": "Redis"
+      "label": "Caché:Redis"
     }
   }
 }

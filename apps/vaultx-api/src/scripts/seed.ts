@@ -1,0 +1,121 @@
+/**
+ * @file: seed.ts
+ * @version: 0.0.0
+ * @author: Raul Daramus
+ * @date: 2025
+ * Copyright (C) 2025 VaultX by Raul Daramus
+ *
+ * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+ * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
+ * or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+ *
+ * You are free to:
+ *   - Share — copy and redistribute the material in any medium or format
+ *   - Adapt — remix, transform, and build upon the material
+ *
+ * Under the following terms:
+ *   - Attribution — You must give appropriate credit, provide a link to the license,
+ *     and indicate if changes were made.
+ *   - NonCommercial — You may not use the material for commercial purposes.
+ *   - ShareAlike — If you remix, transform, or build upon the material, you must
+ *     distribute your contributions under the same license as the original.
+ */
+
+import { randomBytes, scryptSync } from 'node:crypto';
+
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { encryptSecretEnvelope, resolveSeedPayload } from '@vaultx/shared';
+
+import { AppModule } from '../app.module';
+import type { AppConfig } from '../config';
+import { SecretRepository } from '../infrastructure/database/repositories/secret.repository';
+import { UserRepository } from '../infrastructure/database/repositories/user.repository';
+
+const logger = new Logger('SeedScript');
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hashed = scryptSync(password, salt, 32).toString('hex');
+  return `${salt}:${hashed}`;
+}
+
+async function run() {
+  const app = await NestFactory.createApplicationContext(AppModule, {
+    logger: ['error', 'warn'],
+  });
+
+  try {
+    const configService = app.get(ConfigService<AppConfig>);
+    const config = configService.get<AppConfig>('config', { infer: true });
+    logger.log(`Seeding data into MongoDB at ${config.mongo.uri}`);
+
+    const seedPayload = resolveSeedPayload();
+    const userRepository = app.get(UserRepository);
+    const secretRepository = app.get(SecretRepository);
+
+    for (const user of seedPayload.users) {
+      await userRepository.upsertById(user.id, {
+        _id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        status: user.status,
+        password: hashPassword(user.password),
+        emailVerified: user.emailVerified ?? true,
+        twoFactorEnabled: user.twoFactorEnabled ?? false,
+      });
+      logger.log(`Ensured user ${user.email}`);
+    }
+
+    for (const secret of seedPayload.secrets) {
+      const passphrase =
+        secret.passphrase ?? `${secret.ownerId}-default-passphrase`;
+      const envelope = await encryptSecretEnvelope(
+        secret.plaintext,
+        passphrase
+      );
+
+      await secretRepository.upsertById(secret.title, {
+        _id: secret.title,
+        title: secret.title,
+        content: envelope.ciphertext,
+        type: secret.type ?? 'text',
+        status: 'Active',
+        tags: secret.tags ?? [],
+        expiresAt: secret.expiresAt ? new Date(secret.expiresAt) : null,
+        isViewed: false,
+        viewCount: 0,
+        lastViewedAt: null,
+        createdBy: secret.ownerId,
+        isProtected: secret.isProtected ?? true,
+        maxViews: secret.maxViews ?? null,
+        allowedIPs: secret.allowedIPs ?? [],
+        metadata: {
+          ...secret.metadata,
+          seeded: true,
+        },
+        envelope,
+      });
+
+      logger.log(`Seeded secret "${secret.title}" for user ${secret.ownerId}`);
+    }
+
+    logger.log('Seed process completed successfully');
+  } catch (error) {
+    logger.error(
+      'Seed process failed',
+      error instanceof Error ? error.stack : undefined
+    );
+    throw error;
+  } finally {
+    await app.close();
+  }
+}
+
+run().catch(error => {
+  // eslint-disable-next-line no-console
+  console.error(error);
+  process.exit(1);
+});

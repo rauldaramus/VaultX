@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: user.repository.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,39 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import type { Model } from 'mongoose';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+import { User } from '../../../schemas/user.schema';
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+@Injectable()
+export class UserRepository {
+  constructor(
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>
+  ) {}
 
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
+  async create(payload: Partial<User>): Promise<User> {
+    const document = new this.userModel(payload);
+    return document.save();
+  }
 
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
+  async upsertById(id: string, payload: Partial<User>): Promise<User> {
+    return this.userModel
+      .findByIdAndUpdate(id, payload, {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+      })
+      .exec();
+  }
+
+  findByEmail(email: string) {
+    return this.userModel.findOne({ email }).exec();
+  }
+
+  async count(): Promise<number> {
+    return this.userModel.estimatedDocumentCount().exec();
+  }
 }

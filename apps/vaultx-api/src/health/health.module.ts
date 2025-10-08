@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: health.module.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,19 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import { HttpModule } from '@nestjs/axios';
+import { Module } from '@nestjs/common';
+import { TerminusModule } from '@nestjs/terminus';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+import { RedisModule } from '../infrastructure/cache/redis.module';
+import { DatabaseModule } from '../infrastructure/database/database.module';
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+import { HealthController } from './health.controller';
+import { MongoHealthIndicator } from './mongo.health';
 
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
-
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
+@Module({
+  imports: [TerminusModule, DatabaseModule, RedisModule, HttpModule],
+  controllers: [HealthController],
+  providers: [MongoHealthIndicator],
+})
+export class HealthModule {}

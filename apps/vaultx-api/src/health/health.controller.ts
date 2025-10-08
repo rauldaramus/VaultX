@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: health.controller.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,27 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import { Controller, Get } from '@nestjs/common';
+import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+import { RedisHealthIndicator } from '../infrastructure/cache/redis.health';
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+import { MongoHealthIndicator } from './mongo.health';
 
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
+@Controller('health')
+export class HealthController {
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly mongo: MongoHealthIndicator,
+    private readonly redis: RedisHealthIndicator
+  ) {}
 
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
+  @Get()
+  @HealthCheck()
+  check() {
+    return this.health.check([
+      () => this.mongo.isHealthy('mongodb'),
+      () => this.redis.isHealthy('redis'),
+    ]);
+  }
 }

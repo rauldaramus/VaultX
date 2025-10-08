@@ -1,5 +1,6 @@
 /**
- * @file: index.ts
+ * @file: redis.health.ts
+ * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,27 +21,31 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  HealthCheckError,
+  HealthIndicator,
+  HealthIndicatorResult,
+} from '@nestjs/terminus';
+import Redis from 'ioredis';
 
-// Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+import { REDIS_CLIENT } from './redis.constants';
 
-// Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+@Injectable()
+export class RedisHealthIndicator extends HealthIndicator {
+  constructor(
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis
+  ) {
+    super();
+  }
 
-// Base types
-export type Status = 'idle' | 'loading' | 'success' | 'error';
-
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
+  async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    try {
+      await this.redis.ping();
+      return this.getStatus(key, true);
+    } catch (error) {
+      throw new HealthCheckError('Redis check failed', error as Error);
+    }
+  }
 }

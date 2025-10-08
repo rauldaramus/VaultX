@@ -1,0 +1,55 @@
+/**
+ * @file: redis.module.ts
+ * @version: 0.0.0
+ * @author: Raul Daramus
+ * @date: 2025
+ * Copyright (C) 2025 VaultX by Raul Daramus
+ *
+ * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+ * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
+ * or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+ *
+ * You are free to:
+ *   - Share — copy and redistribute the material in any medium or format
+ *   - Adapt — remix, transform, and build upon the material
+ *
+ * Under the following terms:
+ *   - Attribution — You must give appropriate credit, provide a link to the license,
+ *     and indicate if changes were made.
+ *   - NonCommercial — You may not use the material for commercial purposes.
+ *   - ShareAlike — If you remix, transform, or build upon the material, you must
+ *     distribute your contributions under the same license as the original.
+ */
+
+import { Global, Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
+
+import type { AppConfig } from '../../config';
+
+import { REDIS_CLIENT } from './redis.constants';
+import { RedisHealthIndicator } from './redis.health';
+
+@Global()
+@Module({
+  providers: [
+    {
+      provide: REDIS_CLIENT,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<AppConfig>) => {
+        const config = configService.get<AppConfig>('config', { infer: true });
+        return new Redis({
+          host: config.redis.host,
+          port: config.redis.port,
+          username: config.redis.username,
+          password: config.redis.password,
+          tls: config.redis.tls ? {} : undefined,
+          lazyConnect: true,
+        });
+      },
+    },
+    RedisHealthIndicator,
+  ],
+  exports: [REDIS_CLIENT, RedisHealthIndicator],
+})
+export class RedisModule {}
