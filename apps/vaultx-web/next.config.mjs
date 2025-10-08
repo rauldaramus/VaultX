@@ -35,7 +35,7 @@ const nextConfig = {
   },
   webpack(config) {
     const fileLoaderRule = config.module.rules.find(
-      (rule) => rule.test && rule.test.test && rule.test.test('.svg')
+      rule => rule.test && rule.test.test && rule.test.test('.svg')
     );
 
     if (fileLoaderRule) {

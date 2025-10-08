@@ -22,51 +22,61 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useDashboardData } from '../hooks/use-dashboard-data';
+
+const SEGMENTS = [
+  { label: 'Active', color: 'rgb(134 239 172)' },
+  { label: 'Viewed', color: 'rgb(252 165 165)' },
+  { label: 'Expired', color: 'rgb(253 224 71)' },
+];
 
 export function SimplePieChart() {
   const { stats, loading } = useDashboardData();
   const [animatedValues, setAnimatedValues] = useState([0, 0, 0]);
 
   const statusDistribution = stats?.chartData.statusDistribution || [];
-  const activeData = statusDistribution.find(item => item.status === 'Active');
-  const viewedData = statusDistribution.find(item => item.status === 'Viewed');
-  const expiredData = statusDistribution.find(
-    item => item.status === 'Expired'
-  );
+  const percentages = useMemo(() => {
+    const getPercentage = (status: string) =>
+      statusDistribution.find(item => item.status === status)?.percentage || 0;
 
-  const activePercentage = activeData?.percentage || 0;
-  const viewedPercentage = viewedData?.percentage || 0;
-  const expiredPercentage = expiredData?.percentage || 0;
+    return [
+      getPercentage('Active'),
+      getPercentage('Viewed'),
+      getPercentage('Expired'),
+    ] as const;
+  }, [statusDistribution]);
 
-  // Animate the values on mount
+  const activePercentage = percentages[0];
+
   useEffect(() => {
-    if (stats && !loading) {
-      const interval = setInterval(() => {
-        setAnimatedValues(prev => [
-          Math.min(prev[0] + 2, activePercentage),
-          Math.min(prev[1] + 2, viewedPercentage),
-          Math.min(prev[2] + 2, expiredPercentage),
-        ]);
-      }, 20);
-
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        setAnimatedValues([
-          activePercentage,
-          viewedPercentage,
-          expiredPercentage,
-        ]);
-      }, 1000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
+    if (!stats || loading) {
+      return;
     }
-  }, [stats, loading, activePercentage, viewedPercentage, expiredPercentage]);
+
+    let frame = 0;
+    const duration = 500;
+    const maxFrames = Math.ceil(duration / 16);
+
+    const animate = () => {
+      frame += 1;
+      const progress = Math.min(frame / maxFrames, 1);
+
+      setAnimatedValues([
+        percentages[0] * progress,
+        percentages[1] * progress,
+        percentages[2] * progress,
+      ]);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    const id = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(id);
+  }, [stats, loading, percentages]);
 
   if (loading) {
     return (
@@ -77,20 +87,15 @@ export function SimplePieChart() {
   }
 
   const radius = 45;
+  const strokeWidth = 8;
   const circumference = 2 * Math.PI * radius;
+  const trackColor = 'rgba(148, 163, 184, 0.15)';
 
-  // Calculate offsets for each segment
-  const activeOffset =
-    circumference - (circumference * animatedValues[0]) / 100;
-  const viewedOffset =
-    circumference - (circumference * animatedValues[1]) / 100;
-  const expiredOffset =
-    circumference - (circumference * animatedValues[2]) / 100;
-
-  // Calculate rotation for each segment to stack them
-  const activeRotation = 0;
-  const viewedRotation = (animatedValues[0] / 100) * 360;
-  const expiredRotation = ((animatedValues[0] + animatedValues[1]) / 100) * 360;
+  const segmentsWithProgress = SEGMENTS.map((segment, index) => ({
+    ...segment,
+    finalPercentage: percentages[index],
+    animatedPercentage: Math.min(animatedValues[index], percentages[index]),
+  }));
 
   return (
     <div className="relative w-full h-48 flex items-center justify-center mt-4">
@@ -100,56 +105,60 @@ export function SimplePieChart() {
         viewBox="0 0 100 100"
         className="transform -rotate-90"
       >
-        {/* Active circle (green) */}
         <circle
           cx="50"
           cy="50"
           r={radius}
           fill="transparent"
-          stroke="rgb(134 239 172)" // green-300 - más pálido y suave
-          strokeWidth="10"
-          strokeDasharray={circumference}
-          strokeDashoffset={activeOffset}
+          stroke={trackColor}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
-          style={{
-            transform: `rotate(${activeRotation}deg)`,
-            transformOrigin: '50px 50px',
-            transition: 'stroke-dashoffset 0.02s ease-out',
-          }}
         />
-        {/* Viewed circle (red) */}
+        {(() => {
+          let rotationAngle = 0;
+
+          return segmentsWithProgress.map(segment => {
+            const visiblePercentage = segment.animatedPercentage;
+
+            if (visiblePercentage <= 0) {
+              return null;
+            }
+
+            const segmentLength = (visiblePercentage / 100) * circumference;
+            const currentRotation = rotationAngle;
+
+            const circle = (
+              <circle
+                key={segment.label}
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="transparent"
+                stroke={segment.color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={`${segmentLength} ${
+                  circumference - segmentLength
+                }`}
+                strokeLinecap="round"
+                style={{
+                  transform: `rotate(${currentRotation}deg)`,
+                  transformOrigin: '50% 50%',
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            );
+
+            rotationAngle += (visiblePercentage / 100) * 360;
+
+            return circle;
+          });
+        })()}
         <circle
           cx="50"
           cy="50"
-          r={radius}
-          fill="transparent"
-          stroke="rgb(252 165 165)" // red-300 - más pálido y suave
-          strokeWidth="10"
-          strokeDasharray={circumference}
-          strokeDashoffset={viewedOffset}
-          strokeLinecap="round"
-          style={{
-            transform: `rotate(${viewedRotation}deg)`,
-            transformOrigin: '50px 50px',
-            transition: 'stroke-dashoffset 0.02s ease-out',
-          }}
-        />
-        {/* Expired circle (yellow) */}
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          fill="transparent"
-          stroke="rgb(253 224 71)" // yellow-300 - más pálido y suave
-          strokeWidth="10"
-          strokeDasharray={circumference}
-          strokeDashoffset={expiredOffset}
-          strokeLinecap="round"
-          style={{
-            transform: `rotate(${expiredRotation}deg)`,
-            transformOrigin: '50px 50px',
-            transition: 'stroke-dashoffset 0.02s ease-out',
-          }}
+          r={radius - strokeWidth * 0.95}
+          fill="var(--background)"
+          stroke="transparent"
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center flex-col">
