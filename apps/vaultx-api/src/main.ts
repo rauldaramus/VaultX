@@ -21,12 +21,13 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { ValidationPipe, Logger, LogLevel } from '@nestjs/common';
+import { ValidationPipe, LogLevel } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet, { HelmetOptions } from 'helmet';
+import pino from 'pino';
 import 'reflect-metadata';
 
 import { AppModule } from './app.module';
@@ -41,11 +42,26 @@ async function bootstrap() {
   const logLevels: LogLevel[] = isDevelopment
     ? ['log', 'debug', 'error', 'warn', 'verbose']
     : ['log', 'error', 'warn'];
-
-  const logger = new Logger('Bootstrap');
+  const logLevel = isDevelopment ? 'debug' : 'info';
+  const logger = pino({
+    name: 'Bootstrap',
+    level: logLevel,
+    ...(isDevelopment
+      ? {
+          transport: {
+            target: 'pino-pretty',
+            options: {
+              colorize: true,
+              translateTime: 'SYS:standard',
+              ignore: 'pid,hostname',
+            },
+          },
+        }
+      : {}),
+  });
 
   try {
-    logger.log('Initializing NestJS application...');
+    logger.info('Initializing NestJS application...');
 
     const app = await NestFactory.create(AppModule, {
       bufferLogs: true,
@@ -53,14 +69,14 @@ async function bootstrap() {
     });
 
     // Simplemente usar el logger que ya tenemos, no intentar obtenerlo del app
-    logger.log('Application context created successfully');
+    logger.info('Application context created successfully');
 
     const configService = app.get(ConfigService<AppConfig>);
     const config = configService.get<AppConfig>('config', { infer: true });
 
-    logger.log(`Environment: ${config.app.env}`);
-    logger.log(`Application: ${config.app.name}`);
-    logger.verbose(`Log levels enabled: ${logLevels.join(', ')}`);
+    logger.info(`Environment: ${config.app.env}`);
+    logger.info(`Application: ${config.app.name}`);
+    logger.debug(`Log levels enabled: ${logLevels.join(', ')}`);
 
     // Security middleware
     logger.debug('Configuring security middleware...');
@@ -86,7 +102,7 @@ async function bootstrap() {
       origin: config.security.corsOrigins,
       credentials: true,
     });
-    logger.log(
+    logger.info(
       `CORS enabled for origins: ${config.security.corsOrigins.join(', ')}`
     );
 
@@ -112,7 +128,7 @@ async function bootstrap() {
 
     // Swagger documentation
     if (config.swagger.enabled) {
-      logger.log('Setting up Swagger documentation...');
+      logger.info('Setting up Swagger documentation...');
       const swaggerConfig = new DocumentBuilder()
         .setTitle(config.swagger.title)
         .setDescription(config.swagger.description)
@@ -125,34 +141,37 @@ async function bootstrap() {
         jsonDocumentUrl: `${config.swagger.path}.json`,
       });
 
-      logger.verbose(`Swagger JSON available at: /${config.swagger.path}.json`);
-      logger.log(`Swagger UI configured at: /${config.swagger.path}`);
+      logger.debug(`Swagger JSON available at: /${config.swagger.path}.json`);
+      logger.info(`Swagger UI configured at: /${config.swagger.path}`);
     }
 
     // Database connections info
-    logger.verbose(`MongoDB URI: ${config.mongo.uri}`);
-    logger.verbose(`Redis: ${config.redis.host}:${config.redis.port}`);
+    logger.debug(`MongoDB URI: ${config.mongo.uri}`);
+    logger.debug(`Redis: ${config.redis.host}:${config.redis.port}`);
 
     // Start listening
     await app.listen(config.app.port, config.app.host);
 
     // Startup banner
-    logger.log('═══════════════════════════════════════════════════');
-    logger.log(
+    logger.info('═══════════════════════════════════════════════════');
+    logger.info(
       `🚀 Server running on: http://${config.app.host}:${config.app.port}`
     );
-    logger.log(`📚 API prefix: /${config.app.globalPrefix}`);
+    logger.info(`📚 API prefix: /${config.app.globalPrefix}`);
     if (config.swagger.enabled) {
-      logger.log(
+      logger.info(
         `📖 Swagger docs: http://${config.app.host}:${config.app.port}/${config.swagger.path}`
       );
     }
-    logger.log(
+    logger.info(
       `🏥 Health check: http://${config.app.host}:${config.app.port}/${config.app.globalPrefix}/health`
     );
-    logger.log('═══════════════════════════════════════════════════');
+    logger.info('═══════════════════════════════════════════════════');
   } catch (error) {
-    logger.error('Failed to start application', error.stack);
+    logger.error(
+      { err: error instanceof Error ? error : new Error('Unknown error') },
+      'Failed to start application'
+    );
     process.exit(1);
   }
 }
