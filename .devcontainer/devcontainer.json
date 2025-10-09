@@ -32,7 +32,6 @@
   },
 
   "postCreateCommand": "npm install",
-  "postStartCommand": "npm run dev:web",
 
   "hostRequirements": {
     "cpus": 4,
@@ -42,17 +41,20 @@
 
   "remoteUser": "node",
   "portsAttributes": {
-    "4200": {
-      "label": "UI:Web Client"
-    },
     "3000": {
       "label": "API"
     },
-    "27017": {
-      "label": "DB:MongoDB"
+    "4200": {
+      "label": "UI:Web Client"
     },
     "6379": {
       "label": "Caché:Redis"
+    },
+    "9464": {
+      "label": "Open Telemetry"
+    },
+    "27017": {
+      "label": "DB:MongoDB"
     }
   }
 }
