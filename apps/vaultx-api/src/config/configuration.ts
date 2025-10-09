@@ -35,6 +35,7 @@ export type AppConfig = {
     title: string;
     description: string;
     version: string;
+    specPath: string;
   };
   mongo: {
     uri: string;
@@ -90,6 +91,7 @@ export const configuration = (): { config: AppConfig } => {
           process.env.SWAGGER_DESCRIPTION ??
           'Documentación interactiva de la API de VaultX.',
         version: process.env.API_VERSION ?? '0.1.0',
+        specPath: process.env.SWAGGER_SPEC_PATH ?? 'docs/api/openapi.yaml',
       },
       mongo: {
         uri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/vaultx',

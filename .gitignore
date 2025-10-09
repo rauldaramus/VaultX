@@ -58,3 +58,5 @@ AGENTS.md
 .devcontainer/data/
 .memory/*
 .env
+apps/vaultx-web/docs/api/api-contract-inventory.md
+apps/vaultx-web/docs/auth/fr-01-auth-flows.md

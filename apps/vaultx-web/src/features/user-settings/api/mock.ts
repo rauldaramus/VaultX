@@ -26,6 +26,11 @@ import {
   createErrorResponse,
   type ApiResponse,
 } from '@vaultx/shared';
+import { authService } from '@/features/auth/api/services/auth.service';
+import type {
+  ChangePasswordApiRequest,
+  SessionApiModel,
+} from '@/features/auth/api/models/auth.model';
 
 // Simulate API delay
 const simulateDelay = (ms = 500): Promise<void> => {
@@ -118,52 +123,23 @@ export const updateAccountInfo = async (
   );
 };
 
-export const changePassword = async (data: {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}): Promise<ApiResponse<{ message: string }>> => {
-  await simulateDelay(1000);
+export const changePassword = async (
+  data: ChangePasswordApiRequest
+): Promise<ApiResponse<{ message: string; requiresReauth: boolean }>> => {
+  const response = await authService.changePassword(data);
 
-  // Validate current password (mock validation)
-  if (data.currentPassword !== 'password123') {
-    return createErrorResponse('Current password is incorrect', 400, [
-      {
-        field: 'currentPassword',
-        message: 'Current password is incorrect',
-        code: 'INVALID_PASSWORD',
-      },
-    ]);
+  if (response.success && response.data) {
+    mockSecuritySettings.passwordLastChanged = new Date().toISOString();
+    return createSuccessResponse(
+      response.data,
+      response.data.message ?? 'Password changed successfully'
+    );
   }
 
-  // Validate new password match
-  if (data.newPassword !== data.confirmPassword) {
-    return createErrorResponse('Passwords do not match', 400, [
-      {
-        field: 'confirmPassword',
-        message: 'Passwords do not match',
-        code: 'PASSWORD_MISMATCH',
-      },
-    ]);
-  }
-
-  // Validate password strength
-  if (data.newPassword.length < 8) {
-    return createErrorResponse('Password too weak', 400, [
-      {
-        field: 'newPassword',
-        message: 'Password must be at least 8 characters long',
-        code: 'WEAK_PASSWORD',
-      },
-    ]);
-  }
-
-  // Update password last changed date
-  mockSecuritySettings.passwordLastChanged = new Date().toISOString();
-
-  return createSuccessResponse(
-    { message: 'Password changed successfully' },
-    'Password changed successfully'
+  return createErrorResponse(
+    response.error ?? 'Failed to change password',
+    response.statusCode,
+    response.validationErrors
   );
 };
 
@@ -230,63 +206,10 @@ export const updateSecuritySettings = async (
 
 // Active Sessions Mock (this will be moved to auth service)
 export const getActiveSessions = async (): Promise<
-  ApiResponse<Array<Record<string, unknown>>>
-> => {
-  await simulateDelay(500);
+  ApiResponse<SessionApiModel[]>
+> => authService.getUserSessions();
 
-  const sessions = [
-    {
-      id: 'session_1',
-      device: 'Chrome - Windows',
-      location: 'Madrid, Spain',
-      ipAddress: '192.168.1.100',
-      lastActive: '2 minutes ago',
-      current: true,
-      createdAt: '2024-12-25T14:20:00Z',
-    },
-    {
-      id: 'session_2',
-      device: 'Safari - iPhone',
-      location: 'Barcelona, Spain',
-      ipAddress: '10.0.0.50',
-      lastActive: '1 hour ago',
-      current: false,
-      createdAt: '2024-12-24T09:15:00Z',
-    },
-    {
-      id: 'session_3',
-      device: 'Firefox - macOS',
-      location: 'Valencia, Spain',
-      ipAddress: '203.0.113.45',
-      lastActive: '2 days ago',
-      current: false,
-      createdAt: '2024-12-23T10:00:00Z',
-    },
-  ];
-
-  return createSuccessResponse(
-    sessions,
-    'Active sessions retrieved successfully'
-  );
-};
-
-export const revokeSession = async (
+export const revokeSession = (
   sessionId: string
-): Promise<ApiResponse<{ message: string }>> => {
-  await simulateDelay(600);
-
-  if (sessionId === 'session_1') {
-    return createErrorResponse('Cannot revoke current session', 400, [
-      {
-        field: 'sessionId',
-        message: 'You cannot revoke your current session',
-        code: 'CURRENT_SESSION',
-      },
-    ]);
-  }
-
-  return createSuccessResponse(
-    { message: 'Session revoked successfully' },
-    'Session revoked successfully'
-  );
-};
+): Promise<ApiResponse<{ message?: string }>> =>
+  authService.revokeSession(sessionId);

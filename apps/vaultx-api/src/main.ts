@@ -21,12 +21,17 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { ValidationPipe, LogLevel } from '@nestjs/common';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import { LogLevel, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
+import type { OpenAPIObject } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet, { HelmetOptions } from 'helmet';
+import { parse } from 'yaml';
 import 'reflect-metadata';
 
 import { AppModule } from './app.module';
@@ -117,14 +122,28 @@ async function bootstrap() {
 
     // Swagger documentation
     if (config.swagger.enabled) {
-      const swaggerConfig = new DocumentBuilder()
-        .setTitle(config.swagger.title)
-        .setDescription(config.swagger.description)
-        .setVersion(config.swagger.version)
-        .addTag('health', 'Service health endpoints')
-        .build();
+      const specPath = resolve(process.cwd(), config.swagger.specPath);
+      logger.debug(`Loading OpenAPI spec from: ${specPath}`);
 
-      const document = SwaggerModule.createDocument(app, swaggerConfig);
+      let document: OpenAPIObject;
+      if (existsSync(specPath)) {
+        const fileContents = readFileSync(specPath, 'utf8');
+        document = parse(fileContents) as OpenAPIObject;
+      } else {
+        logger.warn(
+          `OpenAPI spec not found at ${specPath}. Falling back to minimal document.`
+        );
+        document = {
+          openapi: '3.1.0',
+          info: {
+            title: config.swagger.title,
+            description: config.swagger.description,
+            version: config.swagger.version,
+          },
+          paths: {},
+        } as OpenAPIObject;
+      }
+
       SwaggerModule.setup(config.swagger.path, app, document, {
         jsonDocumentUrl: `${config.swagger.path}.json`,
       });
