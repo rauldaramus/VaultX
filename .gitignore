@@ -53,20 +53,8 @@ test-output
 .scannerwork/report-task.txt
 .sonarlint/connectedMode.json
 AGENTS.md
-.memory/ci-validation.md
-.memory/CLAUDE.md
-.memory/development-workflow.md
-.memory/devops-pipeline.md
-.memory/settings.local.json
 
 # Devcontainer persisted data (databases)
 .devcontainer/data/
-docs/CLAUDE.md
-docs/gitflow.md
-docs/mockup.png
-docs/SRS.md
-.memory/DEVOPS.md
-.memory/SRS.md
 .memory/*
-apps/vaultx-api/src/main.ts
 .env
