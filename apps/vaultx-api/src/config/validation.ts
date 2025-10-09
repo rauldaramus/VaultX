@@ -30,10 +30,14 @@ export const validationSchema = Joi.object({
     .default('development'),
   APP_HOST: Joi.string().hostname().default('0.0.0.0'),
   APP_PORT: Joi.number().port().default(3333),
+  APP_GLOBAL_PREFIX: Joi.string().default('api'),
 
   SWAGGER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
   SWAGGER_PATH: Joi.string().default('docs'),
   API_VERSION: Joi.string().default('0.1.0'),
+  SWAGGER_DESCRIPTION: Joi.string().default(
+    'Documentación interactiva de la API de VaultX.'
+  ),
 
   MONGO_URI: Joi.string()
     .uri({ scheme: ['mongodb', 'mongodb+srv'] })
