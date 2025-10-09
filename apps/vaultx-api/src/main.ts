@@ -26,7 +26,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
-import helmet from 'helmet';
+import helmet, { HelmetOptions } from 'helmet';
 import 'reflect-metadata';
 
 import { AppModule } from './app.module';
@@ -64,7 +64,22 @@ async function bootstrap() {
 
     // Security middleware
     logger.debug('Configuring security middleware...');
-    app.use(helmet());
+    const helmetOptions: HelmetOptions = {
+      contentSecurityPolicy:
+        config.app.env === 'production'
+          ? {
+              directives: {
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                'img-src': ["'self'", 'data:', 'https://validator.swagger.io'],
+                'script-src': ["'self'", "'unsafe-inline'", 'https:'],
+                'style-src': ["'self'", "'unsafe-inline'", 'https:'],
+              },
+            }
+          : false,
+      crossOriginEmbedderPolicy: false,
+    };
+
+    app.use(helmet(helmetOptions));
     app.use(compression());
 
     app.enableCors({

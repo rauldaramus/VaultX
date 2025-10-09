@@ -22,6 +22,7 @@
  */
 
 import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 
 import { RedisHealthIndicator } from '../infrastructure/cache/redis.health';
@@ -29,6 +30,7 @@ import { RedisHealthIndicator } from '../infrastructure/cache/redis.health';
 import { MongoHealthIndicator } from './mongo.health';
 
 @Controller('health')
+@ApiTags('health')
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
@@ -38,6 +40,14 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
+  @ApiOperation({
+    summary: 'Verificar estado de dependencias',
+    description:
+      'Realiza un chequeo de salud contra MongoDB y Redis para determinar si los servicios están disponibles.',
+  })
+  @ApiOkResponse({
+    description: 'Resultado detallado del estado de las dependencias.',
+  })
   check() {
     return this.health.check([
       () => this.mongo.isHealthy('mongodb'),

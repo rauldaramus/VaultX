@@ -69,3 +69,4 @@ docs/SRS.md
 .memory/SRS.md
 .memory/*
 apps/vaultx-api/src/main.ts
+.env
