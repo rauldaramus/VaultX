@@ -27,14 +27,25 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet, { HelmetOptions } from 'helmet';
-import pino from 'pino';
 import 'reflect-metadata';
 
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { createLogger } from './common/utils/logger.util';
 import type { AppConfig } from './config';
+
+const STARTUP_BANNER = [
+  '██╗░░░██╗░█████╗░██╗░░░██╗██╗░░░░░████████╗██╗░░██╗',
+  '██║░░░██║██╔══██╗██║░░░██║██║░░░░░╚══██╔══╝╚██╗██╔╝',
+  '╚██╗░██╔╝███████║██║░░░██║██║░░░░░░░░██║░░░░╚███╔╝░',
+  '░╚████╔╝░██╔══██║██║░░░██║██║░░░░░░░░██║░░░░██╔██╗░',
+  '░░╚██╔╝░░██║░░██║╚██████╔╝███████╗░░░██║░░░██╔╝╚██╗',
+  '░░░╚═╝░░░╚═╝░░╚═╝░╚═════╝░╚══════╝░░░╚═╝░░░╚═╝░░╚═╝',
+  'Copyright (C) 2025 VaultX by Raul Daramus',
+  'API',
+].join('\n');
 
 async function bootstrap() {
   // Configurar niveles de log según entorno
@@ -42,40 +53,20 @@ async function bootstrap() {
   const logLevels: LogLevel[] = isDevelopment
     ? ['log', 'debug', 'error', 'warn', 'verbose']
     : ['log', 'error', 'warn'];
-  const logLevel = isDevelopment ? 'debug' : 'info';
-  const logger = pino({
-    name: 'Bootstrap',
-    level: logLevel,
-    ...(isDevelopment
-      ? {
-          transport: {
-            target: 'pino-pretty',
-            options: {
-              colorize: true,
-              translateTime: 'SYS:standard',
-              ignore: 'pid,hostname',
-            },
-          },
-        }
-      : {}),
-  });
+  const logger = createLogger('Bootstrap');
 
   try {
-    logger.info('Initializing NestJS application...');
+    console.log(`\n${STARTUP_BANNER}`);
 
     const app = await NestFactory.create(AppModule, {
       bufferLogs: true,
       logger: logLevels,
     });
 
-    // Simplemente usar el logger que ya tenemos, no intentar obtenerlo del app
-    logger.info('Application context created successfully');
-
     const configService = app.get(ConfigService<AppConfig>);
     const config = configService.get<AppConfig>('config', { infer: true });
 
     logger.info(`Environment: ${config.app.env}`);
-    logger.info(`Application: ${config.app.name}`);
     logger.debug(`Log levels enabled: ${logLevels.join(', ')}`);
 
     // Security middleware
@@ -102,7 +93,7 @@ async function bootstrap() {
       origin: config.security.corsOrigins,
       credentials: true,
     });
-    logger.info(
+    logger.debug(
       `CORS enabled for origins: ${config.security.corsOrigins.join(', ')}`
     );
 
@@ -111,7 +102,6 @@ async function bootstrap() {
     logger.debug(`Global prefix set to: /${config.app.globalPrefix}`);
 
     // Validation pipe
-    logger.debug('Configuring global validation pipe...');
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -122,13 +112,11 @@ async function bootstrap() {
     );
 
     // Filters and interceptors
-    logger.debug('Configuring global filters and interceptors...');
     app.useGlobalFilters(new HttpExceptionFilter(), new AllExceptionsFilter());
     app.useGlobalInterceptors(new TransformInterceptor());
 
     // Swagger documentation
     if (config.swagger.enabled) {
-      logger.info('Setting up Swagger documentation...');
       const swaggerConfig = new DocumentBuilder()
         .setTitle(config.swagger.title)
         .setDescription(config.swagger.description)
@@ -140,9 +128,6 @@ async function bootstrap() {
       SwaggerModule.setup(config.swagger.path, app, document, {
         jsonDocumentUrl: `${config.swagger.path}.json`,
       });
-
-      logger.debug(`Swagger JSON available at: /${config.swagger.path}.json`);
-      logger.info(`Swagger UI configured at: /${config.swagger.path}`);
     }
 
     // Database connections info
@@ -152,8 +137,6 @@ async function bootstrap() {
     // Start listening
     await app.listen(config.app.port, config.app.host);
 
-    // Startup banner
-    logger.info('═══════════════════════════════════════════════════');
     logger.info(
       `🚀 Server running on: http://${config.app.host}:${config.app.port}`
     );

@@ -23,17 +23,17 @@
 
 import { randomBytes, scryptSync } from 'node:crypto';
 
-import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { encryptSecretEnvelope, resolveSeedPayload } from '@vaultx/shared';
 
 import { AppModule } from '../app.module';
+import { createLogger } from '../common/utils/logger.util';
 import type { AppConfig } from '../config';
 import { SecretRepository } from '../infrastructure/database/repositories/secret.repository';
 import { UserRepository } from '../infrastructure/database/repositories/user.repository';
 
-const logger = new Logger('SeedScript');
+const logger = createLogger('SeedScript');
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString('hex');
@@ -49,7 +49,7 @@ async function run() {
   try {
     const configService = app.get(ConfigService<AppConfig>);
     const config = configService.get<AppConfig>('config', { infer: true });
-    logger.log(`Seeding data into MongoDB at ${config.mongo.uri}`);
+    logger.info(`Seeding data into MongoDB at ${config.mongo.uri}`);
 
     const seedPayload = resolveSeedPayload();
     const userRepository = app.get(UserRepository);
@@ -66,7 +66,7 @@ async function run() {
         emailVerified: user.emailVerified ?? true,
         twoFactorEnabled: user.twoFactorEnabled ?? false,
       });
-      logger.log(`Ensured user ${user.email}`);
+      logger.info(`Ensured user ${user.email}`);
     }
 
     for (const secret of seedPayload.secrets) {
@@ -99,14 +99,16 @@ async function run() {
         envelope,
       });
 
-      logger.log(`Seeded secret "${secret.title}" for user ${secret.ownerId}`);
+      logger.info(`Seeded secret "${secret.title}" for user ${secret.ownerId}`);
     }
 
-    logger.log('Seed process completed successfully');
+    logger.info('Seed process completed successfully');
   } catch (error) {
     logger.error(
-      'Seed process failed',
-      error instanceof Error ? error.stack : undefined
+      error instanceof Error
+        ? { err: error }
+        : { err: new Error('Unknown seed error') },
+      'Seed process failed'
     );
     throw error;
   } finally {

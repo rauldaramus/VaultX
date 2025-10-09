@@ -21,12 +21,7 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PrometheusExporter,
@@ -39,11 +34,12 @@ import { Resource } from '@opentelemetry/resources';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
+import { createLogger } from '../common/utils/logger.util';
 import type { AppConfig } from '../config';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(TelemetryService.name);
+  private readonly logger = createLogger(TelemetryService.name);
   private sdk: NodeSDK | null = null;
 
   constructor(private readonly configService: ConfigService<AppConfig>) {}
@@ -64,7 +60,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
     };
 
     const exporter = new PrometheusExporter(prometheusOptions, () => {
-      this.logger.log(
+      this.logger.info(
         `Prometheus exporter started on port ${config.telemetry.metricsPort} at /metrics`
       );
     });
@@ -83,13 +79,13 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
     });
 
     await this.sdk.start();
-    this.logger.log('OpenTelemetry instrumentation initialised');
+    this.logger.info('OpenTelemetry instrumentation initialised');
   }
 
   async onModuleDestroy() {
     if (this.sdk) {
       await this.sdk.shutdown();
-      this.logger.log('OpenTelemetry instrumentation shut down');
+      this.logger.info('OpenTelemetry instrumentation shut down');
     }
   }
 }
