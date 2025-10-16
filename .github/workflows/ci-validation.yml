@@ -1,0 +1,209 @@
+name: CI Validation
+
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: true
+  NODE_VERSION: '20'
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ----------------------
+  # PRE-CHECKS
+  # ----------------------
+  prettier:
+    name: Pre — Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+
+  detect_affected:
+    name: Pre — Detect Affected
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.basehead.outputs.base }}
+      head: ${{ steps.basehead.outputs.head }}
+      has_any: ${{ steps.affected.outputs.has_any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      - name: Ensure history and develop
+        run: |
+          git fetch --unshallow || true
+          git fetch origin develop || true
+
+      - id: basehead
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          elif [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+            BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD)
+            HEAD=$(git rev-parse HEAD)
+          else
+            BASE=$(git rev-parse origin/develop 2>/dev/null || git rev-parse HEAD~1 || git rev-list --max-parents=0 HEAD)
+            HEAD=$(git rev-parse HEAD)
+          fi
+
+          # 🔐 fallback seguros
+          if [[ -z "$BASE" ]]; then
+            echo "BASE vacío → usando HEAD~1"
+            BASE=$(git rev-parse HEAD~1 || git rev-list --max-parents=0 HEAD)
+          fi
+          if [[ -z "$HEAD" ]]; then
+            echo "HEAD vacío → usando HEAD actual"
+            HEAD=$(git rev-parse HEAD)
+          fi
+
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+
+      - id: affected
+        run: |
+          set +e
+          PROJECTS=$(npx nx print-affected --base="${{ steps.basehead.outputs.base }}" --head="${{ steps.basehead.outputs.head }}" --select=projects 2>/dev/null)
+          if [[ -z "$PROJECTS" ]]; then
+            echo "has_any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_any=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ----------------------
+  # QUALITY
+  # ----------------------
+  eslint:
+    name: Quality — Linting
+    runs-on: ubuntu-latest
+    needs: [prettier, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx nx affected -t lint --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
+
+  typecheck:
+    name: Quality — Type checking
+    runs-on: ubuntu-latest
+    needs: [prettier, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx nx affected -t typecheck --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
+
+  tests:
+    name: Quality — Unit Tests
+    runs-on: ubuntu-latest
+    needs: [prettier, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx nx affected -t test --parallel=2 --codeCoverage --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"
+
+  audit:
+    name: Quality — Security checks
+    runs-on: ubuntu-latest
+    needs: [prettier]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high --no-progress
+
+  # ----------------------
+  # EXTRA (ANÁLISIS ESTÁTICO)
+  # ----------------------
+  sonarcloud:
+    name: Quality — Static Analysis
+    runs-on: ubuntu-latest
+    needs: [eslint, typecheck, tests, audit]
+    if: >
+      github.ref == 'refs/heads/develop' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true)
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+
+  # ----------------------
+  # INTEGRATION (BUILD FINAL)
+  # ----------------------
+  build:
+    name: Integration — Build
+    runs-on: ubuntu-latest
+    needs: [sonarcloud, detect_affected]
+    if: needs.detect_affected.outputs.has_any == 'true' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx nx affected -t build --parallel=3 --base="${{ needs.detect_affected.outputs.base }}" --head="${{ needs.detect_affected.outputs.head }}"

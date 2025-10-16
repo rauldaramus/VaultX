@@ -1,0 +1,60 @@
+{
+  "name": "Dev Environment for VaultX",
+
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "forwardPorts": [4200, 27017, 6379, 3000],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "GitHub.copilot",
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "Prisma.prisma",
+        "ms-azuretools.vscode-docker",
+        "alefragnani.Bookmarks",
+        "atommaterial.a-file-icon-vscode",
+        "stivo.tailwind-fold",
+        "Anthropic.claude-code",
+        "openai.chatgpt"
+      ]
+    }
+  },
+
+  "postCreateCommand": "npm install",
+
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+
+  "remoteUser": "node",
+  "portsAttributes": {
+    "3000": {
+      "label": "API"
+    },
+    "4200": {
+      "label": "UI:Web Client"
+    },
+    "6379": {
+      "label": "Caché:Redis"
+    },
+    "9464": {
+      "label": "Open Telemetry"
+    },
+    "27017": {
+      "label": "DB:MongoDB"
+    }
+  }
+}

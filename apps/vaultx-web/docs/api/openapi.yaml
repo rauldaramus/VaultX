@@ -1,0 +1,2298 @@
+openapi: 3.1.0
+info:
+  title: VaultX Platform API
+  version: 0.1.0
+  description: Contract-first specification covering authentication, secrets,
+    dashboard, API management, and user settings for VaultX.
+servers:
+  - url: https://api.vaultx.local/v1
+    description: Local development
+  - url: https://staging.api.vaultx.io/v1
+    description: Staging
+  - url: https://api.vaultx.io/v1
+    description: Production
+tags:
+  - name: Auth
+    description: Email/password authentication, token lifecycle, password management.
+  - name: Profile
+    description: Authenticated user profile operations and session management.
+  - name: SSO
+    description: OAuth/OIDC integrations with external identity providers.
+  - name: Secrets
+    description: Secret lifecycle operations and aggregation.
+  - name: Dashboard
+    description: Dashboard insights, activity feeds, and recommendations.
+  - name: ApiTokens
+    description: API token provisioning, rotation, and usage analytics.
+  - name: UserSettings
+    description: Account profile and security preference management.
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate with email and password
+      description: >
+        Validates user credentials and issues an access token plus refresh
+        token. Optional `rememberMe` flag extends refresh token TTL.
+      operationId: loginWithEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Credentials accepted and session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/InvalidCredentials'
+        '403':
+          $ref: '#/components/responses/EmailNotVerified'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '423':
+          $ref: '#/components/responses/AccountLocked'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      description: >
+        Creates a new VaultX account after checking email uniqueness and
+        password policy. Returns authentication tokens so the user is signed in
+        immediately after registration.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/EmailAlreadyExists'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout current session
+      security:
+        - AccessToken: []
+      operationId: logout
+      responses:
+        '200':
+          description: Session terminated and refresh token revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Rotate refresh token
+      description: >
+        Exchanges a valid refresh token for a new access token pair. Supports
+        both cookie and JSON body transport.
+      operationId: refreshToken
+      security:
+        - RefreshToken: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshEnvelope'
+        '401':
+          $ref: '#/components/responses/InvalidRefreshToken'
+        '423':
+          $ref: '#/components/responses/AccountLocked'
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current authenticated user
+      security:
+        - AccessToken: []
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/reset-password/request:
+    post:
+      tags:
+        - Auth
+      summary: Request password reset email
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '202':
+          description: Reset email enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPasswordEnvelope'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+  /auth/change-password:
+    post:
+      tags:
+        - Auth
+      summary: Change password for authenticated user
+      security:
+        - AccessToken: []
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePasswordEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/sessions:
+    get:
+      tags:
+        - Profile
+      summary: List active sessions
+      security:
+        - AccessToken: []
+      operationId: listSessions
+      responses:
+        '200':
+          description: Sessions fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionArrayEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/sessions/{sessionId}:
+    delete:
+      tags:
+        - Profile
+      summary: Revoke specific session
+      security:
+        - AccessToken: []
+      operationId: revokeSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+        '404':
+          $ref: '#/components/responses/SessionNotFound'
+  /auth/profile:
+    patch:
+      tags:
+        - Profile
+      summary: Update profile preferences
+      security:
+        - AccessToken: []
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/verify-email:
+    post:
+      tags:
+        - Auth
+      summary: Verify email token
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+        '400':
+          $ref: '#/components/responses/InvalidVerificationToken'
+  /auth/verify-email/resend:
+    post:
+      tags:
+        - Auth
+      summary: Resend verification email
+      operationId: resendVerificationEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationRequest'
+      responses:
+        '202':
+          description: Verification email queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+  /auth/oauth/{provider}/authorize:
+    get:
+      tags:
+        - SSO
+      summary: Initiate OAuth flow
+      operationId: initiateOAuth
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/OAuthProvider'
+        - name: redirectUri
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to provider authorization URL
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /auth/oauth/{provider}/callback:
+    get:
+      tags:
+        - SSO
+      summary: Handle OAuth callback
+      operationId: handleOAuthCallback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/OAuthProvider'
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect back to VaultX with refresh token cookie set
+        '400':
+          $ref: '#/components/responses/InvalidOAuthCallback'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /secrets:
+    get:
+      tags:
+        - Secrets
+      summary: List secrets
+      operationId: listSecrets
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter secrets by status. Use `all` for no filtering.
+          schema:
+            type: string
+            enum:
+              - Active
+              - Expired
+              - all
+        - name: tags
+          in: query
+          required: false
+          description: Comma separated list of tags to filter by.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: search
+          in: query
+          required: false
+          description: Free text search against title and tags.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Secrets retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretArrayEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      tags:
+        - Secrets
+      summary: Create a secret
+      operationId: createSecret
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSecretRequest'
+      responses:
+        '201':
+          description: Secret created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /secrets/{secretId}:
+    parameters:
+      - name: secretId
+        in: path
+        required: true
+        description: Secret identifier.
+        schema:
+          type: string
+    get:
+      tags:
+        - Secrets
+      summary: Get secret by ID
+      operationId: getSecretById
+      responses:
+        '200':
+          description: Secret retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/SecretNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      tags:
+        - Secrets
+      summary: Update secret
+      operationId: updateSecret
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSecretRequest'
+      responses:
+        '200':
+          description: Secret updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/SecretNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags:
+        - Secrets
+      summary: Delete secret
+      operationId: deleteSecret
+      responses:
+        '200':
+          description: Secret deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/SecretNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /secrets/stats:
+    get:
+      tags:
+        - Secrets
+      summary: Secret statistics
+      operationId: getSecretStats
+      responses:
+        '200':
+          description: Secret stats retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretStatsEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /secrets/tags:
+    get:
+      tags:
+        - Secrets
+      summary: Secret tags
+      operationId: getSecretTags
+      responses:
+        '200':
+          description: List of tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagArrayEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /dashboard/stats:
+    get:
+      tags:
+        - Dashboard
+      summary: Dashboard statistics
+      operationId: getDashboardStats
+      responses:
+        '200':
+          description: Dashboard metrics retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /dashboard/activity:
+    get:
+      tags:
+        - Dashboard
+      summary: Recent activity feed
+      operationId: getDashboardActivity
+      responses:
+        '200':
+          description: Recent activity entries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityLogArrayEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /dashboard/security-recommendations:
+    get:
+      tags:
+        - Dashboard
+      summary: Security recommendations
+      operationId: getSecurityRecommendations
+      responses:
+        '200':
+          description: Security recommendations retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityRecommendationArrayEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/tokens:
+    get:
+      tags:
+        - ApiTokens
+      summary: List API tokens
+      operationId: listApiTokens
+      responses:
+        '200':
+          description: API tokens retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenArrayEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      tags:
+        - ApiTokens
+      summary: Create API token
+      operationId: createApiToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiTokenRequest'
+      responses:
+        '201':
+          description: API token created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/ApiTokenConflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/tokens/{tokenId}:
+    parameters:
+      - name: tokenId
+        in: path
+        required: true
+        description: API token identifier.
+        schema:
+          type: string
+    get:
+      tags:
+        - ApiTokens
+      summary: Get API token
+      operationId: getApiToken
+      responses:
+        '200':
+          description: API token retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/ApiTokenNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      tags:
+        - ApiTokens
+      summary: Update API token metadata
+      operationId: updateApiToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApiTokenRequest'
+      responses:
+        '200':
+          description: API token updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/ApiTokenNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags:
+        - ApiTokens
+      summary: Delete API token
+      operationId: deleteApiToken
+      responses:
+        '200':
+          description: API token deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/ApiTokenNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/tokens/{tokenId}/regenerate:
+    post:
+      tags:
+        - ApiTokens
+      summary: Regenerate API token secret
+      operationId: regenerateApiToken
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          description: API token identifier.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API token regenerated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiTokenEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/ApiTokenNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/usage:
+    get:
+      tags:
+        - ApiTokens
+      summary: API usage statistics
+      operationId: getApiUsage
+      parameters:
+        - name: period
+          in: query
+          required: false
+          description: Optional period selector (e.g., daily, weekly, monthly).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usage stats retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUsageEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /user/account:
+    get:
+      tags:
+        - UserSettings
+      summary: Account information
+      operationId: getAccountInfo
+      responses:
+        '200':
+          description: Account information retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountInfoEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      tags:
+        - UserSettings
+      summary: Update account information
+      operationId: updateAccountInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequest'
+      responses:
+        '200':
+          description: Account information updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountInfoEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/AccountEmailConflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /user/account/delete:
+    post:
+      tags:
+        - UserSettings
+      summary: Initiate account deletion
+      operationId: deleteAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAccountRequest'
+      responses:
+        '200':
+          description: Account deletion initiated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /user/security:
+    get:
+      tags:
+        - UserSettings
+      summary: Security settings
+      operationId: getSecuritySettings
+      responses:
+        '200':
+          description: Security settings retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecuritySettingsEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      tags:
+        - UserSettings
+      summary: Update security settings
+      operationId: updateSecuritySettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSecuritySettingsRequest'
+      responses:
+        '200':
+          description: Security settings updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecuritySettingsEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /auth/reset-password/confirm:
+    post:
+      tags:
+        - Auth
+      summary: Confirm password reset
+      operationId: confirmPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmResetRequest'
+      responses:
+        '200':
+          description: Password reset applied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmResetEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/InvalidResetToken'
+components:
+  securitySchemes:
+    AccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived access token signed with RS256.
+    RefreshToken:
+      type: apiKey
+      in: cookie
+      name: vaultx_refresh_token
+      description: Rotating HttpOnly refresh token.
+  schemas:
+    ApiResponseBase:
+      type: object
+      required:
+        - success
+        - statusCode
+      properties:
+        success:
+          type: boolean
+          description: Indicates whether the operation succeeded.
+        statusCode:
+          type: integer
+          format: int32
+        message:
+          type: string
+        error:
+          type: string
+        errorCode:
+          $ref: '#/components/schemas/AuthErrorCode'
+        timestamp:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        data:
+          description: Envelope payload (defined per endpoint).
+    MessageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - message
+          properties:
+            success:
+              type: boolean
+              const: true
+            message:
+              type: string
+    ValidationError:
+      type: object
+      required:
+        - field
+        - message
+        - code
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+    ValidationEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - error
+            - validationErrors
+          properties:
+            success:
+              type: boolean
+              const: false
+            validationErrors:
+              type: array
+              items:
+                $ref: '#/components/schemas/ValidationError'
+    ErrorEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - error
+          properties:
+            success:
+              type: boolean
+              const: false
+            error:
+              type: string
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          type: string
+          minLength: 8
+          pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$
+        rememberMe:
+          type: boolean
+          default: false
+    LoginResult:
+      type: object
+      required:
+        - user
+        - tokens
+        - expiresIn
+        - sessionId
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          $ref: '#/components/schemas/TokenPair'
+        expiresIn:
+          type: integer
+          description: Access token lifetime in seconds.
+        sessionId:
+          type: string
+          description: Identifier for the created session.
+    LoginEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/LoginResult'
+    RegisterRequest:
+      allOf:
+        - $ref: '#/components/schemas/LoginRequest'
+      required:
+        - email
+        - password
+        - name
+        - confirmPassword
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+        password:
+          type: string
+          minLength: 12
+          pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$
+        confirmPassword:
+          type: string
+        acceptedTerms:
+          type: boolean
+          default: false
+    RegisterResult:
+      type: object
+      required:
+        - user
+        - tokens
+        - message
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          $ref: '#/components/schemas/TokenPair'
+        message:
+          type: string
+    RegisterEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/RegisterResult'
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          minLength: 32
+    RefreshResult:
+      type: object
+      required:
+        - tokens
+        - expiresIn
+      properties:
+        tokens:
+          $ref: '#/components/schemas/TokenPair'
+        expiresIn:
+          type: integer
+    RefreshEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/RefreshResult'
+    ResetPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+    ResetPasswordResult:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        resetToken:
+          type: string
+          description: Optional token for client-side confirmation flows.
+    ResetPasswordEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/ResetPasswordResult'
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+        - confirmPassword
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 12
+          pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$
+        confirmPassword:
+          type: string
+    ChangePasswordResult:
+      type: object
+      required:
+        - message
+        - requiresReauth
+      properties:
+        message:
+          type: string
+        requiresReauth:
+          type: boolean
+    ChangePasswordEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/ChangePasswordResult'
+    Session:
+      type: object
+      required:
+        - id
+        - userId
+        - ipAddress
+        - userAgent
+        - createdAt
+        - lastActiveAt
+        - expiresAt
+        - isActive
+        - deviceInfo
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/ISODateTime'
+        lastActiveAt:
+          $ref: '#/components/schemas/ISODateTime'
+        expiresAt:
+          $ref: '#/components/schemas/ISODateTime'
+        isActive:
+          type: boolean
+        isCurrent:
+          type: boolean
+        deviceInfo:
+          $ref: '#/components/schemas/DeviceInfo'
+    SessionArrayEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Session'
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+        avatar:
+          type: string
+          format: uri
+        timezone:
+          type: string
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+    ResendVerificationRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+    UserEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/User'
+    TokenPair:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+        - scope
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+        expiresIn:
+          type: integer
+        scope:
+          type: array
+          items:
+            type: string
+    DeviceInfo:
+      type: object
+      required:
+        - browser
+        - os
+        - device
+        - isMobile
+      properties:
+        browser:
+          type: string
+        os:
+          type: string
+        device:
+          type: string
+        isMobile:
+          type: boolean
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - emailVerified
+        - createdAt
+        - updatedAt
+        - preferences
+      properties:
+        id:
+          type: string
+        email:
+          $ref: '#/components/schemas/Email'
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+            - moderator
+        avatar:
+          type: string
+          format: uri
+        emailVerified:
+          type: boolean
+        createdAt:
+          $ref: '#/components/schemas/ISODateTime'
+        updatedAt:
+          $ref: '#/components/schemas/ISODateTime'
+        lastLoginAt:
+          $ref: '#/components/schemas/ISODateTime'
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+    UserPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum:
+            - light
+            - dark
+            - system
+        language:
+          type: string
+        timezone:
+          type: string
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+            push:
+              type: boolean
+            security:
+              type: boolean
+        twoFactorEnabled:
+          type: boolean
+    OAuthProvider:
+      type: string
+      enum:
+        - google
+        - github
+        - microsoft
+    Email:
+      type: string
+      format: email
+    ISODateTime:
+      type: string
+      format: date-time
+    AuthErrorCode:
+      type: string
+      enum:
+        - INVALID_CREDENTIALS
+        - USER_NOT_FOUND
+        - EMAIL_ALREADY_EXISTS
+        - EMAIL_NOT_VERIFIED
+        - ACCOUNT_LOCKED
+        - RATE_LIMITED
+        - INVALID_TOKEN
+        - SESSION_EXPIRED
+        - SESSION_NOT_FOUND
+        - TWO_FACTOR_REQUIRED
+        - SERVER_ERROR
+    Secret:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - type
+        - status
+        - tags
+        - createdAt
+        - updatedAt
+        - expiresAt
+        - isViewed
+        - viewCount
+        - createdBy
+        - isProtected
+        - maxViews
+        - allowedIPs
+        - metadata
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum:
+            - text
+            - file
+        status:
+          type: string
+          enum:
+            - Active
+            - Expired
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          $ref: '#/components/schemas/ISODateTime'
+        updatedAt:
+          $ref: '#/components/schemas/ISODateTime'
+        expiresAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        isViewed:
+          type: boolean
+        viewCount:
+          type: integer
+        lastViewedAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        createdBy:
+          type: string
+        isProtected:
+          type: boolean
+        maxViews:
+          oneOf:
+            - type: integer
+            - type: 'null'
+        allowedIPs:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        url:
+          type: string
+        viewedAt:
+          $ref: '#/components/schemas/ISODateTime'
+    CreateSecretRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum:
+            - text
+            - file
+        expiresAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        tags:
+          type: array
+          items:
+            type: string
+        isProtected:
+          type: boolean
+        maxViews:
+          oneOf:
+            - type: integer
+            - type: 'null'
+        allowedIPs:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    UpdateSecretRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum:
+            - text
+            - file
+        status:
+          type: string
+          enum:
+            - Active
+            - Expired
+        tags:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        isProtected:
+          type: boolean
+        maxViews:
+          oneOf:
+            - type: integer
+            - type: 'null'
+        allowedIPs:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    SecretEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/Secret'
+    SecretArrayEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Secret'
+    SecretStats:
+      type: object
+      required:
+        - total
+        - active
+        - expired
+        - viewed
+        - protected
+      properties:
+        total:
+          type: integer
+        active:
+          type: integer
+        expired:
+          type: integer
+        viewed:
+          type: integer
+        protected:
+          type: integer
+    SecretStatsEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/SecretStats'
+    TagArrayEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: array
+              items:
+                type: string
+    DashboardStats:
+      type: object
+      required:
+        - secretsCreated
+        - secretsViewed
+        - activeSecrets
+        - plan
+        - trends
+        - chartData
+      properties:
+        secretsCreated:
+          type: integer
+        secretsViewed:
+          type: integer
+        activeSecrets:
+          type: integer
+        plan:
+          type: string
+        trends:
+          type: object
+          required:
+            - secretsCreatedChange
+            - secretsViewedChange
+            - activeSecretsChange
+          properties:
+            secretsCreatedChange:
+              type: number
+            secretsViewedChange:
+              type: number
+            activeSecretsChange:
+              type: number
+        chartData:
+          type: object
+          required:
+            - secretActivity
+            - statusDistribution
+          properties:
+            secretActivity:
+              type: array
+              items:
+                type: object
+                required:
+                  - day
+                  - secrets
+                properties:
+                  day:
+                    type: string
+                  secrets:
+                    type: integer
+            statusDistribution:
+              type: array
+              items:
+                type: object
+                required:
+                  - status
+                  - count
+                  - percentage
+                properties:
+                  status:
+                    type: string
+                  count:
+                    type: integer
+                  percentage:
+                    type: number
+    DashboardStatsEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/DashboardStats'
+    ActivityLog:
+      type: object
+      required:
+        - id
+        - action
+        - description
+        - timestamp
+        - type
+        - icon
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+        type:
+          type: string
+          enum:
+            - create
+            - view
+            - expire
+            - update
+            - delete
+        icon:
+          type: string
+    ActivityLogArrayEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ActivityLog'
+    SecurityRecommendation:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - type
+        - priority
+        - action
+        - icon
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - security
+            - secrets
+            - review
+        priority:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+        action:
+          type: object
+          required:
+            - label
+            - href
+          properties:
+            label:
+              type: string
+            href:
+              type: string
+        icon:
+          type: string
+        actionText:
+          type: string
+    SecurityRecommendationArrayEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/SecurityRecommendation'
+    ApiToken:
+      type: object
+      required:
+        - id
+        - name
+        - token
+        - createdAt
+        - lastUsedAt
+        - expiresAt
+        - isActive
+        - permissions
+        - usage
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        token:
+          type: string
+        createdAt:
+          $ref: '#/components/schemas/ISODateTime'
+        lastUsedAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        expiresAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        isActive:
+          type: boolean
+        permissions:
+          type: array
+          items:
+            type: string
+        usage:
+          type: object
+          required:
+            - requestsToday
+            - requestsThisMonth
+            - lastRequest
+          properties:
+            requestsToday:
+              type: integer
+            requestsThisMonth:
+              type: integer
+            lastRequest:
+              oneOf:
+                - $ref: '#/components/schemas/ISODateTime'
+                - type: 'null'
+    CreateApiTokenRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        environment:
+          type: string
+    UpdateApiTokenRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+        isActive:
+          type: boolean
+    ApiTokenEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/ApiToken'
+    ApiTokenArrayEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiToken'
+    ApiUsageStats:
+      type: object
+      required:
+        - requestsThisMonth
+        - requestLimit
+        - usagePercentage
+        - remainingRequests
+        - resetDate
+        - usageBreakdown
+        - dailyUsage
+      properties:
+        requestsThisMonth:
+          type: integer
+        requestLimit:
+          type: integer
+        dailyQuota:
+          type: integer
+        usagePercentage:
+          type: number
+        remainingRequests:
+          type: integer
+        resetDate:
+          $ref: '#/components/schemas/ISODateTime'
+        usageBreakdown:
+          type: array
+          items:
+            type: object
+            required:
+              - action
+              - count
+              - percentage
+            properties:
+              action:
+                type: string
+              count:
+                type: integer
+              percentage:
+                type: number
+        dailyUsage:
+          type: array
+          items:
+            type: object
+            required:
+              - date
+              - requests
+            properties:
+              date:
+                type: string
+              requests:
+                type: integer
+    ApiUsageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/ApiUsageStats'
+    AccountInfo:
+      type: object
+      required:
+        - name
+        - email
+        - joinedAt
+        - emailVerified
+        - plan
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar:
+          type: string
+          format: uri
+        bio:
+          type: string
+        location:
+          type: string
+        website:
+          type: string
+          format: uri
+        joinedAt:
+          $ref: '#/components/schemas/ISODateTime'
+        emailVerified:
+          type: boolean
+        plan:
+          type: object
+          required:
+            - name
+            - features
+          properties:
+            name:
+              type: string
+            features:
+              type: array
+              items:
+                type: string
+    UpdateAccountRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar:
+          type: string
+          format: uri
+        bio:
+          type: string
+        location:
+          type: string
+        website:
+          type: string
+          format: uri
+      additionalProperties: false
+    AccountInfoEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/AccountInfo'
+    DeleteAccountRequest:
+      type: object
+      required:
+        - password
+        - confirmation
+      properties:
+        password:
+          type: string
+        confirmation:
+          type: string
+    SecuritySettings:
+      type: object
+      required:
+        - enableScreenshotProtection
+        - isTwoFactorEnabled
+        - passwordLastChanged
+        - loginNotifications
+        - securityAlerts
+        - allowedIPs
+        - sessionTimeout
+        - requirePasswordFor
+      properties:
+        enableScreenshotProtection:
+          type: boolean
+        isTwoFactorEnabled:
+          type: boolean
+        passwordLastChanged:
+          $ref: '#/components/schemas/ISODateTime'
+        loginNotifications:
+          type: boolean
+        securityAlerts:
+          type: boolean
+        allowedIPs:
+          type: array
+          items:
+            type: string
+        sessionTimeout:
+          type: integer
+        requirePasswordFor:
+          type: object
+          required:
+            - viewSecrets
+            - editProfile
+            - deleteAccount
+          properties:
+            viewSecrets:
+              type: boolean
+            editProfile:
+              type: boolean
+            deleteAccount:
+              type: boolean
+    UpdateSecuritySettingsRequest:
+      type: object
+      properties:
+        enableScreenshotProtection:
+          type: boolean
+        isTwoFactorEnabled:
+          type: boolean
+        loginNotifications:
+          type: boolean
+        securityAlerts:
+          type: boolean
+        allowedIPs:
+          type: array
+          items:
+            type: string
+        sessionTimeout:
+          type: integer
+        requirePasswordFor:
+          type: object
+          properties:
+            viewSecrets:
+              type: boolean
+            editProfile:
+              type: boolean
+            deleteAccount:
+              type: boolean
+    SecuritySettingsEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/SecuritySettings'
+    BooleanEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              type: boolean
+    ConfirmResetRequest:
+      type: object
+      required:
+        - token
+        - password
+        - confirmPassword
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          minLength: 12
+          pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$
+        confirmPassword:
+          type: string
+    ConfirmResetResult:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    ConfirmResetEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          required:
+            - success
+            - statusCode
+            - data
+          properties:
+            success:
+              type: boolean
+              const: true
+            data:
+              $ref: '#/components/schemas/ConfirmResetResult'
+  responses:
+    Unauthorized:
+      description: Access token missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InvalidCredentials:
+      description: Credentials rejected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    EmailNotVerified:
+      description: Email verification required before login
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    EmailAlreadyExists:
+      description: Email already registered
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InvalidRefreshToken:
+      description: Refresh token missing, expired, or revoked
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InvalidResetToken:
+      description: Password reset token invalid or expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InvalidVerificationToken:
+      description: Email verification token invalid or expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InvalidOAuthCallback:
+      description: OAuth callback parameters invalid or state mismatch
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    AccountLocked:
+      description: Account locked after repeated failures
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Too many authentication attempts
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            format: int32
+          description: Seconds until next allowed attempt.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    SessionNotFound:
+      description: Session identifier not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    UserNotFound:
+      description: User not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationEnvelope'
+    ServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    SecretNotFound:
+      description: Secret not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ApiTokenNotFound:
+      description: API token not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ApiTokenConflict:
+      description: API token conflicts with existing identifier or name
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    AccountEmailConflict:
+      description: Account email already in use
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
