@@ -36,6 +36,9 @@ export * from './types/features/dashboard.types';
 export * from './types/features/api-management.types';
 export * from './types/features/user-settings.types';
 
+// Error types
+export * from './types/errors';
+
 // Base types
 export type Status = 'idle' | 'loading' | 'success' | 'error';
 

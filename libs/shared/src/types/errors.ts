@@ -1,5 +1,5 @@
 /**
- * @file: user.types.ts
+ * @file: errors.ts
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,48 +20,38 @@
  *     distribute your contributions under the same license as the original.
  */
 
-export type UserRole = 'admin' | 'user' | 'moderator';
+/**
+ * Standardized error codes for authentication operations
+ * Aligned with OpenAPI contract v0.1.1
+ */
+export type AuthErrorCode =
+  | 'INVALID_CREDENTIALS'
+  | 'USER_NOT_FOUND'
+  | 'EMAIL_ALREADY_EXISTS'
+  | 'EMAIL_NOT_VERIFIED'
+  | 'ACCOUNT_LOCKED'
+  | 'RATE_LIMITED'
+  | 'INVALID_TOKEN'
+  | 'INVALID_VERIFICATION_TOKEN'
+  | 'INVALID_RESET_TOKEN'
+  | 'INVALID_OAUTH_CALLBACK'
+  | 'SESSION_EXPIRED'
+  | 'SESSION_NOT_FOUND'
+  | 'TWO_FACTOR_REQUIRED'
+  | 'SERVER_ERROR';
 
-export type UserStatus = 'active' | 'inactive' | 'suspended';
+// Re-export ValidationError from api.ts to avoid duplication
+import type { ValidationError } from '../api';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  status: UserStatus;
-  avatar?: string;
-  emailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastLoginAt?: string;
-}
-
-export interface UserProfile extends User {
-  preferences: UserPreferences;
-}
-
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
-  language: string;
-  timezone: string;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    security: boolean;
-  };
-  twoFactorEnabled: boolean;
-}
-
-export interface UserCreateRequest {
-  email: string;
-  name: string;
-  password: string;
-  role?: UserRole;
-}
-
-export interface UserUpdateRequest {
-  name?: string;
-  email?: string;
-  role?: UserRole;
+/**
+ * Error response structure
+ */
+export interface ErrorResponse {
+  success: false;
+  error: string;
+  errorCode?: AuthErrorCode;
+  statusCode: number;
+  validationErrors?: ValidationError[];
+  timestamp?: string;
+  requestId?: string;
 }
