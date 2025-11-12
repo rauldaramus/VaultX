@@ -1,11 +1,19 @@
 openapi: 3.1.0
 info:
   title: VaultX Platform API
-  version: 0.1.0
-  description: Contract-first specification covering authentication, secrets,
+  version: 0.1.1
+  description: |
+    Contract-first specification covering authentication, secrets,
     dashboard, API management, and user settings for VaultX.
+
+    Version 0.1.1 improvements:
+    - Standardized password validation (12 char minimum)
+    - Added rate limiting to email verification resend
+    - Completed AuthErrorCode enum
+    - Documented Secret fields (url, viewedAt, metadata)
+    - Added environment field to ApiToken
 servers:
-  - url: https://api.vaultx.local/v1
+  - url: https://localhost:3000/v1
     description: Local development
   - url: https://staging.api.vaultx.io/v1
     description: Staging
@@ -303,6 +311,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /auth/oauth/{provider}/authorize:
     get:
       tags:
@@ -979,8 +989,9 @@ components:
           $ref: '#/components/schemas/Email'
         password:
           type: string
-          minLength: 8
+          minLength: 12
           pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$
+          description: Must be at least 12 characters with uppercase, lowercase, number and special character
         rememberMe:
           type: boolean
           default: false
@@ -1378,10 +1389,14 @@ components:
         - ACCOUNT_LOCKED
         - RATE_LIMITED
         - INVALID_TOKEN
+        - INVALID_VERIFICATION_TOKEN
+        - INVALID_RESET_TOKEN
+        - INVALID_OAUTH_CALLBACK
         - SESSION_EXPIRED
         - SESSION_NOT_FOUND
         - TWO_FACTOR_REQUIRED
         - SERVER_ERROR
+      description: Standardized error codes for authentication operations
     Secret:
       type: object
       required:
@@ -1453,10 +1468,16 @@ components:
         metadata:
           type: object
           additionalProperties: true
+          description: Additional metadata for the secret (environment, service, etc.)
         url:
           type: string
+          format: uri
+          description: Shareable URL for one-time access to this secret
         viewedAt:
-          $ref: '#/components/schemas/ISODateTime'
+          oneOf:
+            - $ref: '#/components/schemas/ISODateTime'
+            - type: 'null'
+          description: Timestamp when secret was first viewed (deprecated - use lastViewedAt instead)
     CreateSecretRequest:
       type: object
       required:
@@ -1801,6 +1822,7 @@ components:
         - lastUsedAt
         - expiresAt
         - isActive
+        - environment
         - permissions
         - usage
       properties:
@@ -1822,6 +1844,14 @@ components:
             - type: 'null'
         isActive:
           type: boolean
+        environment:
+          type: string
+          enum:
+            - production
+            - staging
+            - development
+            - test
+          description: Environment this token is intended for
         permissions:
           type: array
           items:
