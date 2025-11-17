@@ -25,6 +25,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import { CryptoModule } from '../../common/crypto';
 import type { AppConfig } from '../../config';
 import { Secret, SecretSchema } from '../../schemas/secret.schema';
 import { User, UserSchema } from '../../schemas/user.schema';
@@ -50,6 +51,7 @@ import { UserRepository } from './repositories/user.repository';
       { name: Secret.name, schema: SecretSchema },
       { name: User.name, schema: UserSchema },
     ]),
+    CryptoModule,
   ],
   providers: [SecretRepository, UserRepository],
   exports: [MongooseModule, SecretRepository, UserRepository],

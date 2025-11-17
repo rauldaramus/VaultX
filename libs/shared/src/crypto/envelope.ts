@@ -120,7 +120,11 @@ function toBase64(buffer: ArrayBuffer): string {
 
 function fromBase64(value: string): ArrayBuffer {
   if (typeof Buffer !== 'undefined') {
-    return Buffer.from(value, 'base64').buffer;
+    const buffer = Buffer.from(value, 'base64');
+    return buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    );
   }
 
   const binary = atob(value);

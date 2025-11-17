@@ -21,7 +21,12 @@
  *     distribute your contributions under the same license as the original.
  */
 
+import { resolve } from 'node:path';
+
 import * as Joi from 'joi';
+
+const REPO_ROOT = resolve(__dirname, '../../../..');
+const DEFAULT_SWAGGER_SPEC_PATH = resolve(REPO_ROOT, 'docs/api/openapi.yaml');
 
 export const validationSchema = Joi.object({
   APP_NAME: Joi.string().default('VaultX API'),
@@ -38,7 +43,7 @@ export const validationSchema = Joi.object({
   SWAGGER_DESCRIPTION: Joi.string().default(
     'Documentación interactiva de la API de VaultX.'
   ),
-  SWAGGER_SPEC_PATH: Joi.string().default('docs/api/openapi.yaml'),
+  SWAGGER_SPEC_PATH: Joi.string().default(DEFAULT_SWAGGER_SPEC_PATH),
 
   MONGO_URI: Joi.string()
     .uri({ scheme: ['mongodb', 'mongodb+srv'] })

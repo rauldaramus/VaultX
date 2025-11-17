@@ -25,7 +25,7 @@ import { randomBytes, scryptSync } from 'node:crypto';
 
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { encryptSecretEnvelope, resolveSeedPayload } from '@vaultx/shared';
+import { resolveSeedPayload } from '@vaultx/shared';
 
 import { AppModule } from '../app.module';
 import { createLogger } from '../common/utils/logger.util';
@@ -72,32 +72,31 @@ async function run() {
     for (const secret of seedPayload.secrets) {
       const passphrase =
         secret.passphrase ?? `${secret.ownerId}-default-passphrase`;
-      const envelope = await encryptSecretEnvelope(
-        secret.plaintext,
-        passphrase
-      );
 
-      await secretRepository.upsertById(secret.title, {
-        _id: secret.title,
-        title: secret.title,
-        content: envelope.ciphertext,
-        type: secret.type ?? 'text',
-        status: 'Active',
-        tags: secret.tags ?? [],
-        expiresAt: secret.expiresAt ? new Date(secret.expiresAt) : null,
-        isViewed: false,
-        viewCount: 0,
-        lastViewedAt: null,
-        createdBy: secret.ownerId,
-        isProtected: secret.isProtected ?? true,
-        maxViews: secret.maxViews ?? null,
-        allowedIPs: secret.allowedIPs ?? [],
-        metadata: {
-          ...secret.metadata,
-          seeded: true,
+      await secretRepository.upsertById(
+        secret.title,
+        {
+          _id: secret.title,
+          title: secret.title,
+          content: secret.plaintext,
+          type: secret.type ?? 'text',
+          status: 'Active',
+          tags: secret.tags ?? [],
+          expiresAt: secret.expiresAt ? new Date(secret.expiresAt) : null,
+          isViewed: false,
+          viewCount: 0,
+          lastViewedAt: null,
+          createdBy: secret.ownerId,
+          isProtected: secret.isProtected ?? true,
+          maxViews: secret.maxViews ?? null,
+          allowedIPs: secret.allowedIPs ?? [],
+          metadata: {
+            ...secret.metadata,
+            seeded: true,
+          },
         },
-        envelope,
-      });
+        { passphrase }
+      );
 
       logger.info(`Seeded secret "${secret.title}" for user ${secret.ownerId}`);
     }
