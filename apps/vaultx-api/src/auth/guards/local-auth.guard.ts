@@ -1,5 +1,5 @@
 /**
- * @file: jwt-auth.guard.ts
+ * @file: local-auth.guard.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -25,4 +25,4 @@ import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
+export class LocalAuthGuard extends AuthGuard('local') {}

@@ -37,6 +37,7 @@ import { AuthTokenRepository } from '../infrastructure/database/repositories/aut
 import { OAuthAccountRepository } from '../infrastructure/database/repositories/oauth-account.repository';
 import { SessionRepository } from '../infrastructure/database/repositories/session.repository';
 import { UserRepository } from '../infrastructure/database/repositories/user.repository';
+import type { AuthTokenType } from '../schemas/auth-token.schema';
 import {
   Session,
   SessionDeviceInfo,
@@ -54,6 +55,7 @@ import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { PasswordService } from './password.service';
+import type { OAuthPassportProfile } from './strategies/oauth.strategy';
 import { AccessTokenPayload, TokenService } from './token.service';
 
 export interface AuthRequestContext {
@@ -75,6 +77,14 @@ interface LoginResult {
   tokens: TokenPairResponse;
   expiresIn: number;
   sessionId: string;
+  requiresVerification?: boolean;
+  verificationToken?: string;
+}
+
+interface OAuthPassportCallbackParams {
+  accessToken: string;
+  refreshToken: string;
+  profile: OAuthPassportProfile;
 }
 
 @Injectable()
@@ -91,6 +101,40 @@ export class AuthService {
     private readonly configService: ConfigService<AppConfig>
   ) {}
 
+  async validateUser(email: string, password: string): Promise<UserDocument> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!this.passwordService.verify(password, user.password)) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    return user;
+  }
+
+  async validateJwtPayload(
+    payload: AccessTokenPayload
+  ): Promise<AccessTokenPayload> {
+    const user = await this.userRepository.findById(payload.sub);
+    if (!user || user.status !== 'active') {
+      throw new UnauthorizedException('User session is not active');
+    }
+
+    const session = await this.sessionRepository.findById(payload.sessionId);
+    if (!session || !session.isActive) {
+      throw new UnauthorizedException('Session has expired');
+    }
+
+    return payload;
+  }
+
   async register(
     dto: RegisterDto,
     context: AuthRequestContext
@@ -99,13 +143,14 @@ export class AuthService {
       throw new BadRequestException('Passwords do not match');
     }
 
-    const existingUser = await this.userRepository.findByEmail(dto.email);
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const existingUser = await this.userRepository.findByEmail(normalizedEmail);
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
 
     const user = await this.userRepository.create({
-      email: dto.email.toLowerCase(),
+      email: normalizedEmail,
       name: dto.name,
       password: this.passwordService.hash(dto.password),
       status: 'active',
@@ -116,30 +161,24 @@ export class AuthService {
     });
 
     const session = await this.issueSessionTokens(user, context);
+    const verificationToken = await this.createEmailVerificationToken(user);
     return {
       user: this.mapUser(user),
       tokens: session.tokens,
       expiresIn: session.tokens.expiresIn,
       sessionId: session.sessionId,
+      requiresVerification: true,
+      verificationToken,
     };
   }
 
   async login(
     dto: LoginDto,
-    context: AuthRequestContext
+    context: AuthRequestContext,
+    validatedUser?: UserDocument
   ): Promise<LoginResult> {
-    const user = await this.userRepository.findByEmail(dto.email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!this.passwordService.verify(dto.password, user.password)) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (user.status !== 'active') {
-      throw new UnauthorizedException('Account is not active');
-    }
+    const user =
+      validatedUser ?? (await this.validateUser(dto.email, dto.password));
 
     await this.userRepository.updateLastLogin(user.id);
 
@@ -168,7 +207,8 @@ export class AuthService {
 
     const hashedToken = this.tokenService.hashToken(tokenValue);
     const storedToken = await this.authTokenRepository.findValidByHash(
-      hashedToken
+      hashedToken,
+      'refresh'
     );
 
     if (!storedToken) {
@@ -279,10 +319,23 @@ export class AuthService {
   }
 
   async requestPasswordReset(dto: ResetPasswordRequestDto) {
-    // Placeholder implementation. In a real scenario this would enqueue an email job.
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      return {
+        message: 'If the email exists, a reset link was sent.',
+      };
+    }
+
+    await this.authTokenRepository.revokeByUserAndType(
+      user.id,
+      'password_reset'
+    );
+    const resetToken = await this.createPasswordResetToken(user);
+
     return {
       message: 'If the email exists, a reset link was sent.',
-      resetToken: `reset_${Buffer.from(dto.email).toString('hex')}`,
+      resetToken,
     };
   }
 
@@ -291,7 +344,28 @@ export class AuthService {
       throw new BadRequestException('Passwords do not match');
     }
 
-    // For milestone 0 we simply acknowledge the request.
+    const hashedToken = this.tokenService.hashToken(dto.token);
+    const storedToken = await this.authTokenRepository.findValidByHash(
+      hashedToken,
+      'password_reset'
+    );
+
+    if (!storedToken) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const userId =
+      storedToken.user instanceof Types.ObjectId
+        ? storedToken.user.toHexString()
+        : (storedToken.user as string);
+
+    await this.userRepository.updatePassword(
+      userId,
+      this.passwordService.hash(dto.newPassword)
+    );
+    await this.authTokenRepository.consumeById(storedToken.id);
+    await this.sessionRepository.deactivateUserSessions(userId);
+
     return {
       message: 'Password reset confirmed. Please login with your new password.',
     };
@@ -317,20 +391,79 @@ export class AuthService {
     return { message: 'Session revoked successfully' };
   }
 
-  async verifyEmail(_dto: VerifyEmailDto) {
-    return { message: 'Email verification processed' };
+  async verifyEmail(dto: VerifyEmailDto) {
+    const hashedToken = this.tokenService.hashToken(dto.token);
+    const storedToken = await this.authTokenRepository.findValidByHash(
+      hashedToken,
+      'email_verification'
+    );
+
+    if (!storedToken) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    const userId =
+      storedToken.user instanceof Types.ObjectId
+        ? storedToken.user.toHexString()
+        : (storedToken.user as string);
+
+    const user = await this.userRepository.markEmailVerified(userId);
+    await this.authTokenRepository.consumeById(storedToken.id);
+
+    return {
+      message: 'Email verification completed',
+      emailVerified: user?.emailVerified ?? true,
+    };
   }
 
-  async resendVerification(_dto: ResendVerificationDto) {
-    return { message: 'Verification email will be sent if the account exists' };
+  async resendVerification(dto: ResendVerificationDto) {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+
+    if (!user) {
+      return {
+        message: 'If the account exists, a verification email will be sent.',
+      };
+    }
+
+    if (user.emailVerified) {
+      return {
+        message: 'Email already verified',
+        emailVerified: true,
+      };
+    }
+
+    await this.authTokenRepository.revokeByUserAndType(
+      user.id,
+      'email_verification'
+    );
+    const verificationToken = await this.createEmailVerificationToken(user);
+
+    return {
+      message: 'Verification email sent',
+      verificationToken,
+    };
   }
 
   async initiateOAuth(provider: OAuthProvider, redirectUri?: string) {
-    const target = redirectUri ?? 'https://vaultx.dev/dashboard';
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const oauthConfig = config?.auth.oauth;
+    if (!oauthConfig) {
+      throw new BadRequestException('OAuth configuration is not available');
+    }
+
+    const target = redirectUri ?? oauthConfig.callbackUrl;
+    const authorizationUrl = new URL(oauthConfig.authorizationUrl);
+    authorizationUrl.searchParams.set('client_id', oauthConfig.clientId);
+    authorizationUrl.searchParams.set('response_type', 'code');
+    authorizationUrl.searchParams.set('redirect_uri', target);
+    authorizationUrl.searchParams.set('scope', oauthConfig.scope.join(' '));
+    authorizationUrl.searchParams.set('state', provider);
+
     return {
-      redirectUrl: `https://sso.vaultx.dev/${provider}?redirect_uri=${encodeURIComponent(
-        target
-      )}`,
+      authorizationUrl: authorizationUrl.toString(),
+      provider,
+      state: provider,
     };
   }
 
@@ -354,6 +487,18 @@ export class AuthService {
       message: 'OAuth callback received',
       provider,
       linked: Boolean(maybeUser),
+    };
+  }
+
+  async handleOAuthPassportCallback(
+    params: OAuthPassportCallbackParams
+  ): Promise<Record<string, unknown>> {
+    return {
+      message: 'OAuth passport callback received',
+      provider: params.profile.provider,
+      accessToken: params.accessToken,
+      refreshToken: params.refreshToken,
+      profile: params.profile,
     };
   }
 
@@ -399,6 +544,7 @@ export class AuthService {
       session: session._id,
       hashedToken: this.tokenService.hashToken(refresh.token),
       expiresAt: refresh.expiresAt,
+      tokenType: 'refresh',
       metadata: {
         ipAddress: context.ipAddress,
         userAgent: context.userAgent,
@@ -419,6 +565,42 @@ export class AuthService {
         scope: this.defaultScopes,
       },
     };
+  }
+
+  private async createEmailVerificationToken(
+    user: UserDocument
+  ): Promise<string> {
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const ttl = config?.auth.emailVerificationTtl ?? 60 * 60 * 24;
+    return this.createSingleUseToken(user, 'email_verification', ttl);
+  }
+
+  private async createPasswordResetToken(user: UserDocument): Promise<string> {
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const ttl = config?.auth.passwordResetTtl ?? 60 * 30;
+    return this.createSingleUseToken(user, 'password_reset', ttl);
+  }
+
+  private async createSingleUseToken(
+    user: UserDocument,
+    type: AuthTokenType,
+    ttlSeconds: number,
+    metadata?: Record<string, unknown>
+  ): Promise<string> {
+    const token = this.tokenService.createOneTimeToken(ttlSeconds);
+    await this.authTokenRepository.create({
+      user: user._id,
+      session: null,
+      hashedToken: this.tokenService.hashToken(token.token),
+      expiresAt: token.expiresAt,
+      tokenType: type,
+      metadata,
+    });
+    return token.token;
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 
   private resolveRefreshTtl(rememberMe?: boolean): number {

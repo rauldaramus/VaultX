@@ -25,14 +25,15 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
 export type AuthTokenDocument = HydratedDocument<AuthToken>;
+export type AuthTokenType = 'refresh' | 'email_verification' | 'password_reset';
 
 @Schema({ collection: 'auth_tokens', timestamps: true })
 export class AuthToken {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   user!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Session', required: true, index: true })
-  session!: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Session', default: null, index: true })
+  session?: Types.ObjectId | null;
 
   @Prop({ type: String, required: true, unique: true })
   hashedToken!: string;
@@ -40,11 +41,22 @@ export class AuthToken {
   @Prop({ type: Date, required: true, index: true })
   expiresAt!: Date;
 
+  @Prop({
+    type: String,
+    enum: ['refresh', 'email_verification', 'password_reset'],
+    default: 'refresh',
+    index: true,
+  })
+  tokenType!: AuthTokenType;
+
   @Prop({ type: Boolean, default: false })
   revoked!: boolean;
 
   @Prop({ type: Date, default: null })
   revokedAt!: Date | null;
+
+  @Prop({ type: Date, default: null })
+  consumedAt?: Date | null;
 
   @Prop({ type: Object, default: {} })
   metadata?: Record<string, unknown>;

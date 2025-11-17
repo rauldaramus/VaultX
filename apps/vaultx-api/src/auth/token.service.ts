@@ -25,7 +25,7 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt, { JwtHeader, JwtPayload } from 'jsonwebtoken';
 
 import type { AppConfig } from '../config';
 
@@ -36,37 +36,77 @@ export interface AccessTokenPayload extends JwtPayload {
   sessionId: string;
 }
 
-interface RefreshTokenPayload {
+interface OpaqueTokenPayload {
   token: string;
   expiresAt: Date;
   ttl: number;
 }
 
+interface JwtKeyDetails {
+  kid: string;
+  privateKey: string;
+  publicKey: string;
+}
+
 @Injectable()
 export class TokenService {
-  constructor(private readonly configService: ConfigService<AppConfig>) {}
+  private readonly keyStore = new Map<string, JwtKeyDetails>();
+  private activeKid: string;
+
+  constructor(private readonly configService: ConfigService<AppConfig>) {
+    const config = this.getAuthConfig();
+    config.jwt.keys.forEach(key => {
+      this.keyStore.set(key.kid, key);
+    });
+    this.activeKid = config.jwt.activeKid;
+  }
 
   createAccessToken(payload: Omit<AccessTokenPayload, 'iat' | 'exp'>): {
     token: string;
     expiresIn: number;
   } {
     const config = this.getAuthConfig();
-    const token = jwt.sign(payload, config.accessTokenSecret, {
+    const key = this.getActiveKey();
+    const token = jwt.sign(payload, key.privateKey, {
       expiresIn: config.accessTokenTtl,
+      algorithm: 'RS256',
+      keyid: key.kid,
     });
+
     return { token, expiresIn: config.accessTokenTtl };
   }
 
   verifyAccessToken(token: string): AccessTokenPayload {
     try {
-      const config = this.getAuthConfig();
-      return jwt.verify(token, config.accessTokenSecret) as AccessTokenPayload;
+      const publicKey = this.getPublicKeyForToken(token);
+      return jwt.verify(token, publicKey, {
+        algorithms: ['RS256'],
+      }) as AccessTokenPayload;
     } catch {
       throw new UnauthorizedException('Invalid or expired access token');
     }
   }
 
-  createRefreshToken(ttlOverride?: number): RefreshTokenPayload {
+  getPublicKeyForToken(token: string): string {
+    const decoded = jwt.decode(token, { complete: true }) as {
+      header: JwtHeader;
+    } | null;
+    const kid = decoded?.header?.kid ?? this.activeKid;
+    const key = this.keyStore.get(kid);
+    if (!key) {
+      throw new UnauthorizedException('Unknown token key identifier');
+    }
+    return key.publicKey;
+  }
+
+  rotateAccessTokenKey(kid: string): void {
+    if (!this.keyStore.has(kid)) {
+      throw new Error(`JWT key "${kid}" is not available`);
+    }
+    this.activeKid = kid;
+  }
+
+  createRefreshToken(ttlOverride?: number): OpaqueTokenPayload {
     const config = this.getAuthConfig();
     const ttl = ttlOverride ?? config.refreshTokenTtl;
     const expiresAt = new Date(Date.now() + ttl * 1000);
@@ -74,8 +114,33 @@ export class TokenService {
     return { token, expiresAt, ttl };
   }
 
+  createOneTimeToken(ttlSeconds: number, size = 48): OpaqueTokenPayload {
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+    const token = randomBytes(size).toString('base64url');
+    return { token, expiresAt, ttl: ttlSeconds };
+  }
+
   hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private getActiveKey(): JwtKeyDetails {
+    if (this.keyStore.size === 0) {
+      throw new Error('No JWT signing keys configured');
+    }
+    const active = this.keyStore.get(this.activeKid);
+    if (active) {
+      return active;
+    }
+
+    const fallback = this.keyStore.values().next().value as
+      | JwtKeyDetails
+      | undefined;
+    if (!fallback) {
+      throw new Error('No JWT signing keys configured');
+    }
+    this.activeKid = fallback.kid;
+    return fallback;
   }
 
   private getAuthConfig(): AppConfig['auth'] {

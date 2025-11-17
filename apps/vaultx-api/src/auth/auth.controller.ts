@@ -35,9 +35,11 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import type { OAuthProvider } from '@vaultx/shared';
 import { createSuccessResponse } from '@vaultx/shared';
+import type { OAuthProvider } from '@vaultx/shared';
 import type { Request } from 'express';
+
+import type { UserDocument } from '../schemas/user.schema';
 
 import { AuthService, AuthRequestContext } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -51,8 +53,11 @@ import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { SessionActivityInterceptor } from './interceptors/session-activity.interceptor';
 import type { AccessTokenPayload } from './token.service';
+
+type RequestWithUser = Request & { user?: UserDocument };
 
 @Controller('auth')
 export class AuthController {
@@ -65,10 +70,12 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Req() req: Request) {
+  @UseGuards(LocalAuthGuard)
+  async login(@Body() dto: LoginDto, @Req() req: RequestWithUser) {
     const result = await this.authService.login(
       dto,
-      this.buildContext(req, dto.rememberMe)
+      this.buildContext(req, dto.rememberMe),
+      req.user
     );
     return createSuccessResponse(result, 'Login successful');
   }

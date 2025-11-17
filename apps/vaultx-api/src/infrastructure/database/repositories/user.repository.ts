@@ -68,6 +68,20 @@ export class UserRepository {
     return this.userModel.estimatedDocumentCount().exec();
   }
 
+  async markEmailVerified(id: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        {
+          emailVerified: true,
+          status: 'active',
+          updatedAt: new Date(),
+        },
+        { new: true }
+      )
+      .exec();
+  }
+
   async updatePreferences(
     id: string,
     preferences: Partial<UserPreferences>

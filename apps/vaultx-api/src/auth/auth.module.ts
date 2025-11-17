@@ -22,25 +22,37 @@
  */
 
 import { Module } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
 
 import { DatabaseModule } from '../infrastructure/database/database.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { SessionActivityInterceptor } from './interceptors/session-activity.interceptor';
 import { PasswordService } from './password.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { VaultxOAuthStrategy } from './strategies/oauth.strategy';
 import { TokenService } from './token.service';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [
+    DatabaseModule,
+    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
+  ],
   controllers: [AuthController],
   providers: [
     AuthService,
     PasswordService,
     TokenService,
     JwtAuthGuard,
+    LocalAuthGuard,
     SessionActivityInterceptor,
+    LocalStrategy,
+    JwtStrategy,
+    VaultxOAuthStrategy,
   ],
   exports: [AuthService],
 })

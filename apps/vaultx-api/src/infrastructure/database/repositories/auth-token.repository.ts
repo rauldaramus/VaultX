@@ -28,6 +28,7 @@ import type { Model } from 'mongoose';
 import {
   AuthToken,
   AuthTokenDocument,
+  AuthTokenType,
 } from '../../../schemas/auth-token.schema';
 
 @Injectable()
@@ -42,10 +43,14 @@ export class AuthTokenRepository {
     return document.save();
   }
 
-  findValidByHash(hash: string): Promise<AuthTokenDocument | null> {
+  findValidByHash(
+    hash: string,
+    type: AuthTokenType = 'refresh'
+  ): Promise<AuthTokenDocument | null> {
     return this.tokenModel
       .findOne({
         hashedToken: hash,
+        tokenType: type,
         revoked: false,
         expiresAt: { $gt: new Date() },
       })
@@ -64,6 +69,28 @@ export class AuthTokenRepository {
         { session: sessionId, revoked: false },
         { revoked: true, revokedAt: new Date() }
       )
+      .exec();
+  }
+
+  async revokeByUserAndType(
+    userId: string,
+    tokenType: AuthTokenType
+  ): Promise<void> {
+    await this.tokenModel
+      .updateMany(
+        { user: userId, tokenType, revoked: false },
+        { revoked: true, revokedAt: new Date() }
+      )
+      .exec();
+  }
+
+  async consumeById(id: string): Promise<void> {
+    await this.tokenModel
+      .findByIdAndUpdate(id, {
+        revoked: true,
+        revokedAt: new Date(),
+        consumedAt: new Date(),
+      })
       .exec();
   }
 

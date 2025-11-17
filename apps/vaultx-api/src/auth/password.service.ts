@@ -21,35 +21,24 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { compareSync, genSaltSync, hashSync } from 'bcryptjs';
+
+import type { AppConfig } from '../config';
 
 @Injectable()
 export class PasswordService {
-  private readonly saltLength = 16;
-  private readonly keyLength = 64;
+  constructor(private readonly configService: ConfigService<AppConfig>) {}
 
   hash(password: string): string {
-    const salt = randomBytes(this.saltLength);
-    const derived = scryptSync(password, salt, this.keyLength);
-    return `${salt.toString('hex')}:${derived.toString('hex')}`;
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const rounds = config?.auth.bcryptSaltRounds ?? 12;
+    const salt = genSaltSync(rounds);
+    return hashSync(password, salt);
   }
 
-  verify(password: string, hash: string): boolean {
-    const [saltHex, hashedHex] = hash.split(':');
-    if (!saltHex || !hashedHex) {
-      return false;
-    }
-
-    const salt = Buffer.from(saltHex, 'hex');
-    const hashedPassword = Buffer.from(hashedHex, 'hex');
-    const derived = scryptSync(password, salt, this.keyLength);
-
-    if (derived.length !== hashedPassword.length) {
-      return false;
-    }
-
-    return timingSafeEqual(derived, hashedPassword);
+  verify(password: string, hashed: string): boolean {
+    return compareSync(password, hashed);
   }
 }

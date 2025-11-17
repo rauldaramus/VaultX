@@ -39,6 +39,46 @@ export const validationSchema = Joi.object({
     .positive()
     .default(60 * 60 * 24 * 7),
   AUTH_REFRESH_TOKEN_COOKIE: Joi.string().default('vaultx_refresh_token'),
+  AUTH_BCRYPT_SALT_ROUNDS: Joi.number().integer().min(4).default(12),
+  AUTH_EMAIL_VERIFICATION_TTL: Joi.number()
+    .integer()
+    .positive()
+    .default(60 * 60 * 24),
+  AUTH_PASSWORD_RESET_TTL: Joi.number()
+    .integer()
+    .positive()
+    .default(60 * 30),
+  AUTH_JWT_ACTIVE_KID: Joi.string().default('vaultx-dev-key'),
+  AUTH_JWT_PRIVATE_KEY: Joi.string().optional(),
+  AUTH_JWT_PUBLIC_KEY: Joi.string().optional(),
+  AUTH_JWT_KEYS: Joi.string()
+    .custom((value, helpers) => {
+      if (!value) {
+        return value;
+      }
+      try {
+        JSON.parse(value);
+        return value;
+      } catch {
+        return helpers.error('any.invalid');
+      }
+    })
+    .messages({
+      'any.invalid': 'AUTH_JWT_KEYS must be a valid JSON array string',
+    })
+    .optional(),
+  AUTH_OAUTH_CLIENT_ID: Joi.string().default('vaultx-dev-client'),
+  AUTH_OAUTH_CLIENT_SECRET: Joi.string().default('vaultx-dev-secret'),
+  AUTH_OAUTH_AUTHORIZATION_URL: Joi.string()
+    .uri()
+    .default('https://auth.vaultx.dev/oauth/authorize'),
+  AUTH_OAUTH_TOKEN_URL: Joi.string()
+    .uri()
+    .default('https://auth.vaultx.dev/oauth/token'),
+  AUTH_OAUTH_CALLBACK_URL: Joi.string()
+    .uri()
+    .default('http://localhost:3333/api/auth/oauth/callback'),
+  AUTH_OAUTH_SCOPE: Joi.string().default('openid,email'),
 
   SWAGGER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
   SWAGGER_PATH: Joi.string().default('docs'),

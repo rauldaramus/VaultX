@@ -26,7 +26,7 @@ const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 
 module.exports = {
   output: {
-    path: join(__dirname, 'dist'),
+    path: join(__dirname, '../../dist/apps/vaultx-api'),
   },
   plugins: [
     new NxAppWebpackPlugin({
