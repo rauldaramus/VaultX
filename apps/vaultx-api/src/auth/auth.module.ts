@@ -1,5 +1,5 @@
 /**
- * @file: app.module.ts
+ * @file: auth.module.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -22,27 +22,26 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 
-import { AuthModule } from './auth/auth.module';
-import { configuration, validationSchema } from './config';
-import { HealthModule } from './health/health.module';
-import { RedisModule } from './infrastructure/cache/redis.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
+import { DatabaseModule } from '../infrastructure/database/database.module';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SessionActivityInterceptor } from './interceptors/session-activity.interceptor';
+import { PasswordService } from './password.service';
+import { TokenService } from './token.service';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    TelemetryModule,
-    DatabaseModule,
-    RedisModule,
-    HealthModule,
-    AuthModule,
+  imports: [DatabaseModule],
+  controllers: [AuthController],
+  providers: [
+    AuthService,
+    PasswordService,
+    TokenService,
+    JwtAuthGuard,
+    SessionActivityInterceptor,
   ],
+  exports: [AuthService],
 })
-export class AppModule {}
+export class AuthModule {}

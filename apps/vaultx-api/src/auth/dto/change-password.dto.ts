@@ -1,5 +1,5 @@
 /**
- * @file: app.module.ts
+ * @file: change-password.dto.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -21,28 +21,17 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { IsString, Matches, MinLength } from 'class-validator';
 
-import { AuthModule } from './auth/auth.module';
-import { configuration, validationSchema } from './config';
-import { HealthModule } from './health/health.module';
-import { RedisModule } from './infrastructure/cache/redis.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
+export class ChangePasswordDto {
+  @IsString()
+  currentPassword!: string;
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    TelemetryModule,
-    DatabaseModule,
-    RedisModule,
-    HealthModule,
-    AuthModule,
-  ],
-})
-export class AppModule {}
+  @IsString()
+  @MinLength(12)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$/)
+  newPassword!: string;
+
+  @IsString()
+  confirmPassword!: string;
+}

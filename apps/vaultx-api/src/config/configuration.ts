@@ -21,30 +21,7 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { resolve } from 'node:path';
-
-/**
- * @file: configuration.ts
- * @version: 0.0.0
- * @author: Raul Daramus
- * @date: 2025
- * Copyright (C) 2025 VaultX by Raul Daramus
- *
- * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
- * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
- * or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
- *
- * You are free to:
- *   - Share — copy and redistribute the material in any medium or format
- *   - Adapt — remix, transform, and build upon the material
- *
- * Under the following terms:
- *   - Attribution — You must give appropriate credit, provide a link to the license,
- *     and indicate if changes were made.
- *   - NonCommercial — You may not use the material for commercial purposes.
- *   - ShareAlike — If you remix, transform, or build upon the material, you must
- *     distribute your contributions under the same license as the original.
- */
+import { isAbsolute, resolve } from 'node:path';
 
 export type AppConfig = {
   app: {
@@ -53,6 +30,13 @@ export type AppConfig = {
     host: string;
     port: number;
     globalPrefix: string;
+  };
+  auth: {
+    accessTokenSecret: string;
+    refreshTokenSecret: string;
+    accessTokenTtl: number;
+    refreshTokenTtl: number;
+    refreshTokenCookie: string;
   };
   swagger: {
     enabled: boolean;
@@ -96,8 +80,8 @@ const splitAndTrim = (value: string | undefined): string[] => {
     .filter(origin => origin.length > 0);
 };
 
-const REPO_ROOT = resolve(__dirname, '../../../..');
-const DEFAULT_SWAGGER_SPEC_PATH = resolve(REPO_ROOT, 'docs/api/openapi.yaml');
+const resolveSpecPath = (value: string) =>
+  isAbsolute(value) ? value : resolve(process.cwd(), value);
 
 export const configuration = (): { config: AppConfig } => {
   const corsOrigins = splitAndTrim(process.env.CORS_ORIGINS);
@@ -111,6 +95,18 @@ export const configuration = (): { config: AppConfig } => {
         port: Number(process.env.APP_PORT ?? 3333),
         globalPrefix: process.env.APP_GLOBAL_PREFIX ?? 'api',
       },
+      auth: {
+        accessTokenSecret:
+          process.env.AUTH_ACCESS_TOKEN_SECRET ?? 'dev-access-secret',
+        refreshTokenSecret:
+          process.env.AUTH_REFRESH_TOKEN_SECRET ?? 'dev-refresh-secret',
+        accessTokenTtl: Number(process.env.AUTH_ACCESS_TOKEN_TTL ?? 900),
+        refreshTokenTtl: Number(
+          process.env.AUTH_REFRESH_TOKEN_TTL ?? 60 * 60 * 24 * 7
+        ),
+        refreshTokenCookie:
+          process.env.AUTH_REFRESH_TOKEN_COOKIE ?? 'vaultx_refresh_token',
+      },
       swagger: {
         enabled: (process.env.SWAGGER_ENABLED ?? 'true') === 'true',
         path: process.env.SWAGGER_PATH ?? 'docs',
@@ -119,7 +115,9 @@ export const configuration = (): { config: AppConfig } => {
           process.env.SWAGGER_DESCRIPTION ??
           'Documentación interactiva de la API de VaultX.',
         version: process.env.API_VERSION ?? '0.1.0',
-        specPath: process.env.SWAGGER_SPEC_PATH ?? DEFAULT_SWAGGER_SPEC_PATH,
+        specPath: resolveSpecPath(
+          process.env.SWAGGER_SPEC_PATH ?? 'docs/api/openapi.yaml'
+        ),
       },
       mongo: {
         uri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/vaultx',

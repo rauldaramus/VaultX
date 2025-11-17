@@ -27,10 +27,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { CryptoModule } from '../../common/crypto';
 import type { AppConfig } from '../../config';
+import { AuthToken, AuthTokenSchema } from '../../schemas/auth-token.schema';
+import {
+  OAuthAccount,
+  OAuthAccountSchema,
+} from '../../schemas/oauth-account.schema';
 import { Secret, SecretSchema } from '../../schemas/secret.schema';
+import { Session, SessionSchema } from '../../schemas/session.schema';
 import { User, UserSchema } from '../../schemas/user.schema';
 
+import { AuthTokenRepository } from './repositories/auth-token.repository';
+import { OAuthAccountRepository } from './repositories/oauth-account.repository';
 import { SecretRepository } from './repositories/secret.repository';
+import { SessionRepository } from './repositories/session.repository';
 import { UserRepository } from './repositories/user.repository';
 
 @Module({
@@ -50,10 +59,26 @@ import { UserRepository } from './repositories/user.repository';
     MongooseModule.forFeature([
       { name: Secret.name, schema: SecretSchema },
       { name: User.name, schema: UserSchema },
+      { name: Session.name, schema: SessionSchema },
+      { name: AuthToken.name, schema: AuthTokenSchema },
+      { name: OAuthAccount.name, schema: OAuthAccountSchema },
     ]),
     CryptoModule,
   ],
-  providers: [SecretRepository, UserRepository],
-  exports: [MongooseModule, SecretRepository, UserRepository],
+  providers: [
+    SecretRepository,
+    UserRepository,
+    SessionRepository,
+    AuthTokenRepository,
+    OAuthAccountRepository,
+  ],
+  exports: [
+    MongooseModule,
+    SecretRepository,
+    UserRepository,
+    SessionRepository,
+    AuthTokenRepository,
+    OAuthAccountRepository,
+  ],
 })
 export class DatabaseModule {}

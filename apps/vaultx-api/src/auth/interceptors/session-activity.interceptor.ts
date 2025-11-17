@@ -1,5 +1,5 @@
 /**
- * @file: app.module.ts
+ * @file: session-activity.interceptor.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -21,28 +21,30 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import type { Request } from 'express';
+import type { Observable } from 'rxjs';
 
-import { AuthModule } from './auth/auth.module';
-import { configuration, validationSchema } from './config';
-import { HealthModule } from './health/health.module';
-import { RedisModule } from './infrastructure/cache/redis.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
+import type { AccessTokenPayload } from '../../auth/token.service';
+import { SessionRepository } from '../../infrastructure/database/repositories/session.repository';
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    TelemetryModule,
-    DatabaseModule,
-    RedisModule,
-    HealthModule,
-    AuthModule,
-  ],
-})
-export class AppModule {}
+type RequestWithUser = Request & { user?: AccessTokenPayload };
+
+@Injectable()
+export class SessionActivityInterceptor implements NestInterceptor {
+  constructor(private readonly sessionRepository: SessionRepository) {}
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const sessionId = request.user?.sessionId;
+    if (sessionId) {
+      void this.sessionRepository.touch(sessionId);
+    }
+    return next.handle();
+  }
+}

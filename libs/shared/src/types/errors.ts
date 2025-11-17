@@ -41,7 +41,7 @@ export type AuthErrorCode =
   | 'SERVER_ERROR';
 
 // Re-export ValidationError from api.ts to avoid duplication
-import type { ValidationError } from '../api';
+import type { ValidationError } from '../api.js';
 
 /**
  * Error response structure

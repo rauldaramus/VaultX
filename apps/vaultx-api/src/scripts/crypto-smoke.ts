@@ -1,5 +1,5 @@
 /**
- * @file: app.module.ts
+ * @file: crypto-smoke.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -21,28 +21,29 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { strict as assert } from 'node:assert';
 
-import { AuthModule } from './auth/auth.module';
-import { configuration, validationSchema } from './config';
-import { HealthModule } from './health/health.module';
-import { RedisModule } from './infrastructure/cache/redis.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
+import { CryptoService } from '../common/crypto/crypto.service';
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    TelemetryModule,
-    DatabaseModule,
-    RedisModule,
-    HealthModule,
-    AuthModule,
-  ],
-})
-export class AppModule {}
+async function run() {
+  const cryptoService = new CryptoService();
+  const plaintext = 'VaultX zero-knowledge smoke test';
+
+  const { envelope, passphrase } = await cryptoService.encrypt(plaintext);
+  const decrypted = await cryptoService.decrypt(envelope, passphrase);
+
+  assert.equal(
+    decrypted,
+    plaintext,
+    'Decrypted secret should match the original plaintext'
+  );
+
+  // eslint-disable-next-line no-console
+  console.log('✅ CryptoService smoke test passed');
+}
+
+run().catch(error => {
+  // eslint-disable-next-line no-console
+  console.error('❌ CryptoService smoke test failed', error);
+  process.exit(1);
+});

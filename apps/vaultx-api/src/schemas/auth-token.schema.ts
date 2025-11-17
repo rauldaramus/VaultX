@@ -1,5 +1,5 @@
 /**
- * @file: app.module.ts
+ * @file: auth-token.schema.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -21,28 +21,33 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
-import { AuthModule } from './auth/auth.module';
-import { configuration, validationSchema } from './config';
-import { HealthModule } from './health/health.module';
-import { RedisModule } from './infrastructure/cache/redis.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
+export type AuthTokenDocument = HydratedDocument<AuthToken>;
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    TelemetryModule,
-    DatabaseModule,
-    RedisModule,
-    HealthModule,
-    AuthModule,
-  ],
-})
-export class AppModule {}
+@Schema({ collection: 'auth_tokens', timestamps: true })
+export class AuthToken {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  user!: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Session', required: true, index: true })
+  session!: Types.ObjectId;
+
+  @Prop({ type: String, required: true, unique: true })
+  hashedToken!: string;
+
+  @Prop({ type: Date, required: true, index: true })
+  expiresAt!: Date;
+
+  @Prop({ type: Boolean, default: false })
+  revoked!: boolean;
+
+  @Prop({ type: Date, default: null })
+  revokedAt!: Date | null;
+
+  @Prop({ type: Object, default: {} })
+  metadata?: Record<string, unknown>;
+}
+
+export const AuthTokenSchema = SchemaFactory.createForClass(AuthToken);

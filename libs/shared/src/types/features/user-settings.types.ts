@@ -64,7 +64,7 @@ export interface SecuritySettings {
   };
 }
 
-import { ActiveSession } from './auth.types';
+import type { ActiveSession } from './auth.types.js';
 
 // Combined User Settings State
 export interface UserSettingsState {

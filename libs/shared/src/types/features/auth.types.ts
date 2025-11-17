@@ -20,7 +20,7 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { User } from '../entities/user.types';
+import type { User } from '../entities/user.types.js';
 
 export interface AuthState {
   user: User | null;

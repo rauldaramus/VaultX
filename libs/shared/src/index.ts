@@ -21,23 +21,23 @@
  */
 
 // Re-export shared types and utilities
-export * from './api';
-export * from './lib/utils';
-export * from './crypto';
-export * from './seed';
+export * from './api.js';
+export * from './lib/utils.js';
+export * from './crypto/index.js';
+export * from './seed/index.js';
 
 // Entity types
-export * from './types/entities/user.types';
-export * from './types/entities/secret.types';
+export * from './types/entities/user.types.js';
+export * from './types/entities/secret.types.js';
 
 // Feature types
-export * from './types/features/auth.types';
-export * from './types/features/dashboard.types';
-export * from './types/features/api-management.types';
-export * from './types/features/user-settings.types';
+export * from './types/features/auth.types.js';
+export * from './types/features/dashboard.types.js';
+export * from './types/features/api-management.types.js';
+export * from './types/features/user-settings.types.js';
 
 // Error types
-export * from './types/errors';
+export * from './types/errors.js';
 
 // Base types
 export type Status = 'idle' | 'loading' | 'success' | 'error';

@@ -61,7 +61,7 @@ async function bootstrap() {
   const logger = createLogger('Bootstrap');
 
   try {
-    console.log(`\n${STARTUP_BANNER}`);
+    logger.info(`\n${STARTUP_BANNER}`);
 
     const app = await NestFactory.create(AppModule, {
       bufferLogs: true,
@@ -146,6 +146,17 @@ async function bootstrap() {
 
       SwaggerModule.setup(config.swagger.path, app, document, {
         jsonDocumentUrl: `${config.swagger.path}.json`,
+      });
+
+      const docsRoute = config.swagger.path.startsWith('/')
+        ? config.swagger.path
+        : `/${config.swagger.path}`;
+      const httpAdapter = app.getHttpAdapter();
+      httpAdapter.get('/', (_req, res) => {
+        res.redirect(docsRoute);
+      });
+      httpAdapter.get('/health', (_req, res) => {
+        res.redirect(`/${config.app.globalPrefix}/health`);
       });
     }
 

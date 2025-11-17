@@ -1,5 +1,5 @@
 /**
- * @file: app.module.ts
+ * @file: password.service.ts
  * @version: 0.0.0
  * @author: Raul Daramus
  * @date: 2025
@@ -21,28 +21,35 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
-import { AuthModule } from './auth/auth.module';
-import { configuration, validationSchema } from './config';
-import { HealthModule } from './health/health.module';
-import { RedisModule } from './infrastructure/cache/redis.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
+import { Injectable } from '@nestjs/common';
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-      validationSchema,
-    }),
-    TelemetryModule,
-    DatabaseModule,
-    RedisModule,
-    HealthModule,
-    AuthModule,
-  ],
-})
-export class AppModule {}
+@Injectable()
+export class PasswordService {
+  private readonly saltLength = 16;
+  private readonly keyLength = 64;
+
+  hash(password: string): string {
+    const salt = randomBytes(this.saltLength);
+    const derived = scryptSync(password, salt, this.keyLength);
+    return `${salt.toString('hex')}:${derived.toString('hex')}`;
+  }
+
+  verify(password: string, hash: string): boolean {
+    const [saltHex, hashedHex] = hash.split(':');
+    if (!saltHex || !hashedHex) {
+      return false;
+    }
+
+    const salt = Buffer.from(saltHex, 'hex');
+    const hashedPassword = Buffer.from(hashedHex, 'hex');
+    const derived = scryptSync(password, salt, this.keyLength);
+
+    if (derived.length !== hashedPassword.length) {
+      return false;
+    }
+
+    return timingSafeEqual(derived, hashedPassword);
+  }
+}
