@@ -23,6 +23,7 @@
 'use client';
 
 import type { LoginCredentials } from '@vaultx/shared';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useState } from 'react';
@@ -123,12 +124,12 @@ export function LoginForm() {
               >
                 Password
               </label>
-              <a
-                href="#"
+              <Link
+                href="/forgot-password"
                 className="text-sm text-primary hover:underline transition-all duration-200 hover:scale-105"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <Input
               id="password"
