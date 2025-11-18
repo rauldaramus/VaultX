@@ -1,10 +1,35 @@
 /** @type {import('next').NextConfig} */
+const API_PROXY_TARGET =
+  process.env.NEXT_API_PROXY_TARGET ?? 'http://localhost:3000';
+
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  async rewrites() {
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return {
+        beforeFiles: [],
+        afterFiles: [],
+        fallback: [],
+      };
+    }
+
+    const destination = `${API_PROXY_TARGET.replace(/\/+$/, '')}/api/:path*`;
+
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination,
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
   nx: {
     svgr: false,

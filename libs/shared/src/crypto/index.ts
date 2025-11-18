@@ -21,4 +21,4 @@
  *     distribute your contributions under the same license as the original.
  */
 
-export * from './envelope';
+export * from './envelope.js';

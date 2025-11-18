@@ -20,6 +20,8 @@
  *     distribute your contributions under the same license as the original.
  */
 
+import Link from 'next/link';
+
 import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export default function LoginPage() {
@@ -52,9 +54,12 @@ export default function LoginPage() {
           <div className="mt-8 text-center text-sm text-muted-foreground">
             <p>
               Don&apos;t have an account?{' '}
-              <a href="#" className="font-medium text-primary hover:underline">
+              <Link
+                href="/signup"
+                className="font-medium text-primary hover:underline"
+              >
                 Sign up for free
-              </a>
+              </Link>
             </p>
           </div>
         </div>

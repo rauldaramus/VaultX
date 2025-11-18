@@ -21,24 +21,24 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { randomBytes, scryptSync } from 'node:crypto';
-
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { encryptSecretEnvelope, resolveSeedPayload } from '@vaultx/shared';
+import { resolveSeedPayload } from '@vaultx/shared';
+import { hashSync, genSaltSync } from 'bcryptjs';
 
 import { AppModule } from '../app.module';
 import { createLogger } from '../common/utils/logger.util';
 import type { AppConfig } from '../config';
 import { SecretRepository } from '../infrastructure/database/repositories/secret.repository';
 import { UserRepository } from '../infrastructure/database/repositories/user.repository';
+import type { Secret } from '../schemas/secret.schema';
+import type { User } from '../schemas/user.schema';
 
 const logger = createLogger('SeedScript');
 
 function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const hashed = scryptSync(password, salt, 32).toString('hex');
-  return `${salt}:${hashed}`;
+  const salt = genSaltSync(12);
+  return hashSync(password, salt);
 }
 
 async function run() {
@@ -56,8 +56,7 @@ async function run() {
     const secretRepository = app.get(SecretRepository);
 
     for (const user of seedPayload.users) {
-      await userRepository.upsertById(user.id, {
-        _id: user.id,
+      const payload: Partial<User> = {
         email: user.email,
         name: user.name,
         role: user.role,
@@ -65,22 +64,18 @@ async function run() {
         password: hashPassword(user.password),
         emailVerified: user.emailVerified ?? true,
         twoFactorEnabled: user.twoFactorEnabled ?? false,
-      });
+      };
+      await userRepository.upsertById(user.id, payload);
       logger.info(`Ensured user ${user.email}`);
     }
 
     for (const secret of seedPayload.secrets) {
       const passphrase =
         secret.passphrase ?? `${secret.ownerId}-default-passphrase`;
-      const envelope = await encryptSecretEnvelope(
-        secret.plaintext,
-        passphrase
-      );
 
-      await secretRepository.upsertById(secret.title, {
-        _id: secret.title,
+      const payload: Partial<Secret> = {
         title: secret.title,
-        content: envelope.ciphertext,
+        content: secret.plaintext,
         type: secret.type ?? 'text',
         status: 'Active',
         tags: secret.tags ?? [],
@@ -96,8 +91,9 @@ async function run() {
           ...secret.metadata,
           seeded: true,
         },
-        envelope,
-      });
+      };
+
+      await secretRepository.upsertById(secret.title, payload, { passphrase });
 
       logger.info(`Seeded secret "${secret.title}" for user ${secret.ownerId}`);
     }

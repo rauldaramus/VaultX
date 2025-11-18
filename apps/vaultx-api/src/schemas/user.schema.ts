@@ -24,6 +24,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  security: boolean;
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  timezone: string;
+  notifications: NotificationPreferences;
+  twoFactorEnabled: boolean;
+}
+
 export type UserDocument = HydratedDocument<User>;
 
 @Schema({ collection: 'users', timestamps: true })
@@ -34,8 +48,15 @@ export class User {
   @Prop({ required: true })
   name!: string;
 
-  @Prop({ required: true, enum: ['admin', 'user'], default: 'user' })
-  role!: 'admin' | 'user';
+  @Prop({ type: String, default: null })
+  avatar?: string | null;
+
+  @Prop({
+    required: true,
+    enum: ['admin', 'user', 'moderator'],
+    default: 'user',
+  })
+  role!: 'admin' | 'user' | 'moderator';
 
   @Prop({
     required: true,
@@ -52,6 +73,41 @@ export class User {
 
   @Prop({ default: false })
   twoFactorEnabled!: boolean;
+
+  @Prop({ type: Date, default: null })
+  lastLoginAt!: Date | null;
+
+  @Prop({
+    type: {
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'system'],
+        default: 'dark',
+      },
+      language: { type: String, default: 'en' },
+      timezone: { type: String, default: 'UTC' },
+      notifications: {
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: false },
+        security: { type: Boolean, default: true },
+      },
+      twoFactorEnabled: { type: Boolean, default: false },
+    },
+    default: {
+      theme: 'dark',
+      language: 'en',
+      timezone: 'UTC',
+      notifications: {
+        email: true,
+        push: false,
+        security: true,
+      },
+      twoFactorEnabled: false,
+    },
+  })
+  preferences!: UserPreferences;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.index({ email: 1 }, { unique: true });

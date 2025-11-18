@@ -25,6 +25,7 @@ import { Inter } from 'next/font/google';
 import type React from 'react';
 
 import './globals.css';
+import { AuthValidationProvider } from '@/features/auth/context/auth-validation.context';
 import { ThemeProvider } from '@/shared/components/theme-provider';
 import { cn } from '@/shared/lib/utils';
 
@@ -52,7 +53,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <AuthValidationProvider>{children}</AuthValidationProvider>
         </ThemeProvider>
       </body>
     </html>

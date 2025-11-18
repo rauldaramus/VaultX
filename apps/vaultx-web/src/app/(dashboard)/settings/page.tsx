@@ -21,6 +21,7 @@
  */
 
 import { AccountInfoForm } from '@/features/user-settings/components/account-info-form';
+import { ActiveSessions } from '@/features/user-settings/components/active-sessions';
 import { ChangePasswordForm } from '@/features/user-settings/components/change-password-form';
 import { DeleteAccount } from '@/features/user-settings/components/delete-account';
 
@@ -50,6 +51,12 @@ export default function SettingsPage() {
         <div
           className="animate-fade-in-up opacity-0"
           style={{ animationDelay: '0.3s' }}
+        >
+          <ActiveSessions />
+        </div>
+        <div
+          className="animate-fade-in-up opacity-0"
+          style={{ animationDelay: '0.4s' }}
         >
           <DeleteAccount />
         </div>

@@ -24,6 +24,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { AuthModule } from './auth/auth.module';
 import { configuration, validationSchema } from './config';
 import { HealthModule } from './health/health.module';
 import { RedisModule } from './infrastructure/cache/redis.module';
@@ -41,6 +42,7 @@ import { TelemetryModule } from './telemetry/telemetry.module';
     DatabaseModule,
     RedisModule,
     HealthModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

@@ -62,6 +62,10 @@ export interface RegisterApiResponse {
   user: UserApiModel;
   tokens: TokensApiModel;
   message: string;
+  sessionId?: string;
+  expiresIn?: number;
+  requiresVerification?: boolean;
+  verificationToken?: string;
 }
 
 export interface RefreshTokenApiResponse {

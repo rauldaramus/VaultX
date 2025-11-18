@@ -20,7 +20,7 @@
  *     distribute your contributions under the same license as the original.
  */
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'moderator';
 
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 
@@ -30,22 +30,27 @@ export interface User {
   name: string;
   role: UserRole;
   status: UserStatus;
+  avatar?: string;
+  emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  lastLoginAt?: string;
 }
 
 export interface UserProfile extends User {
-  avatar?: string;
   preferences: UserPreferences;
 }
 
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
   language: string;
+  timezone: string;
   notifications: {
     email: boolean;
     push: boolean;
+    security: boolean;
   };
+  twoFactorEnabled: boolean;
 }
 
 export interface UserCreateRequest {

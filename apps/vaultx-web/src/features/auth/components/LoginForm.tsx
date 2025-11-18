@@ -23,6 +23,7 @@
 'use client';
 
 import type { LoginCredentials } from '@vaultx/shared';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useState } from 'react';
@@ -40,6 +41,7 @@ export function LoginForm() {
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
+    rememberMe: false,
   });
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
@@ -123,12 +125,12 @@ export function LoginForm() {
               >
                 Password
               </label>
-              <a
-                href="#"
+              <Link
+                href="/forgot-password"
                 className="text-sm text-primary hover:underline transition-all duration-200 hover:scale-105"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <Input
               id="password"
@@ -139,6 +141,30 @@ export function LoginForm() {
               required
               className="h-11 transition-all duration-300 focus:scale-105 hover:border-primary/50"
             />
+          </div>
+
+          <div
+            className="flex items-center space-x-2 animate-fade-in-left opacity-0"
+            style={{ animationDelay: '0.45s' }}
+          >
+            <input
+              id="rememberMe"
+              type="checkbox"
+              checked={credentials.rememberMe ?? false}
+              onChange={e =>
+                setCredentials(prev => ({
+                  ...prev,
+                  rememberMe: e.target.checked,
+                }))
+              }
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200 cursor-pointer"
+            />
+            <label
+              htmlFor="rememberMe"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer transition-colors duration-200 hover:text-primary"
+            >
+              Remember me for 30 days
+            </label>
           </div>
 
           <Button
@@ -156,27 +182,6 @@ export function LoginForm() {
               'Sign in'
             )}
           </Button>
-
-          <div
-            className="mt-4 p-3 bg-muted/50 rounded-md border transition-all duration-300 hover:bg-muted/70 hover:border-primary/30 animate-fade-in-up opacity-0"
-            style={{ animationDelay: '0.6s' }}
-          >
-            <p className="text-xs text-muted-foreground mb-2 font-medium transition-colors duration-200 hover:text-foreground">
-              Demo credentials:
-            </p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p className="transition-colors duration-200 hover:text-foreground">
-                <span className="font-mono bg-background px-2 py-1 rounded transition-all duration-200 hover:bg-primary/10">
-                  test@example.com
-                </span>
-              </p>
-              <p className="transition-colors duration-200 hover:text-foreground">
-                <span className="font-mono bg-background px-2 py-1 rounded transition-all duration-200 hover:bg-primary/10">
-                  password123
-                </span>
-              </p>
-            </div>
-          </div>
         </form>
 
         <div

@@ -25,7 +25,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 
-import { User } from '../../../schemas/user.schema';
+import {
+  User,
+  UserDocument,
+  UserPreferences,
+} from '../../../schemas/user.schema';
 
 @Injectable()
 export class UserRepository {
@@ -34,12 +38,15 @@ export class UserRepository {
     private readonly userModel: Model<User>
   ) {}
 
-  async create(payload: Partial<User>): Promise<User> {
+  async create(payload: Partial<User>): Promise<UserDocument> {
     const document = new this.userModel(payload);
     return document.save();
   }
 
-  async upsertById(id: string, payload: Partial<User>): Promise<User> {
+  async upsertById(
+    id: string,
+    payload: Partial<User>
+  ): Promise<UserDocument | null> {
     return this.userModel
       .findByIdAndUpdate(id, payload, {
         upsert: true,
@@ -49,11 +56,82 @@ export class UserRepository {
       .exec();
   }
 
-  findByEmail(email: string) {
+  findById(id: string): Promise<UserDocument | null> {
+    return this.userModel.findById(id).exec();
+  }
+
+  findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }
 
   async count(): Promise<number> {
     return this.userModel.estimatedDocumentCount().exec();
+  }
+
+  async markEmailVerified(id: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        {
+          emailVerified: true,
+          status: 'active',
+          updatedAt: new Date(),
+        },
+        { new: true }
+      )
+      .exec();
+  }
+
+  async updatePreferences(
+    id: string,
+    preferences: Partial<UserPreferences>
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        { $set: this.buildPreferencesUpdate(preferences) },
+        { new: true }
+      )
+      .exec();
+  }
+
+  async updatePassword(
+    id: string,
+    password: string
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(id, { password, updatedAt: new Date() }, { new: true })
+      .exec();
+  }
+
+  async updateLastLogin(id: string): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(id, { lastLoginAt: new Date() })
+      .exec();
+  }
+
+  private buildPreferencesUpdate(
+    preferences: Partial<UserPreferences>
+  ): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+    if (preferences.theme) {
+      payload['preferences.theme'] = preferences.theme;
+    }
+    if (preferences.language) {
+      payload['preferences.language'] = preferences.language;
+    }
+    if (preferences.timezone) {
+      payload['preferences.timezone'] = preferences.timezone;
+    }
+    if (preferences.notifications) {
+      Object.entries(preferences.notifications).forEach(([key, value]) => {
+        payload[`preferences.notifications.${key}`] = value;
+      });
+    }
+    if (typeof preferences.twoFactorEnabled === 'boolean') {
+      payload['preferences.twoFactorEnabled'] = preferences.twoFactorEnabled;
+      payload.twoFactorEnabled = preferences.twoFactorEnabled;
+    }
+    return payload;
   }
 }

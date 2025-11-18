@@ -6,8 +6,8 @@
 import type {
   CreateSecretRequest,
   Secret,
-} from '../types/entities/secret.types';
-import type { User } from '../types/entities/user.types';
+} from '../types/entities/secret.types.js';
+import type { User } from '../types/entities/user.types.js';
 
 export interface SeedUser
   extends Pick<User, 'id' | 'email' | 'name' | 'role' | 'status'> {

@@ -24,12 +24,7 @@
 import type { AccountInfo } from '@vaultx/shared';
 import { useState, useEffect, useCallback } from 'react';
 
-import {
-  getAccountInfo,
-  updateAccountInfo,
-  changePassword,
-  deleteAccount,
-} from '../api/mock';
+import { authService } from '@/features/auth/api/services/auth.service';
 
 interface AccountSettingsData {
   accountInfo: AccountInfo | null;
@@ -57,10 +52,22 @@ export const useAccountSettingsData = (): AccountSettingsData => {
       setLoading(true);
       setError(null);
 
-      const response = await getAccountInfo();
+      const response = await authService.getCurrentUser();
 
       if (response.success && response.data) {
-        setAccountInfo(response.data);
+        // Map UserApiModel to AccountInfo
+        const accountData: AccountInfo = {
+          name: response.data.name,
+          email: response.data.email,
+          avatar: response.data.avatar || null,
+          bio: null, // Not available in current backend
+          location: null, // Not available in current backend
+          website: null, // Not available in current backend
+          joinedAt: response.data.createdAt,
+          emailVerified: response.data.emailVerified,
+          plan: 'free', // Default plan
+        };
+        setAccountInfo(accountData);
       } else {
         setError(response.error || 'Failed to fetch account information');
       }
@@ -78,10 +85,28 @@ export const useAccountSettingsData = (): AccountSettingsData => {
       try {
         setError(null);
 
-        const response = await updateAccountInfo(info);
+        // Map AccountInfo fields to UserApiModel fields
+        const updates: { name?: string; avatar?: string | null } = {};
+        if (info.name !== undefined) updates.name = info.name;
+        if (info.avatar !== undefined) updates.avatar = info.avatar;
+        // Note: email updates might require verification, handle carefully
+
+        const response = await authService.updateProfile(updates);
 
         if (response.success && response.data) {
-          setAccountInfo(response.data);
+          // Update local state with new data
+          const accountData: AccountInfo = {
+            name: response.data.name,
+            email: response.data.email,
+            avatar: response.data.avatar || null,
+            bio: accountInfo?.bio || null,
+            location: accountInfo?.location || null,
+            website: accountInfo?.website || null,
+            joinedAt: response.data.createdAt,
+            emailVerified: response.data.emailVerified,
+            plan: accountInfo?.plan || 'free',
+          };
+          setAccountInfo(accountData);
           return true;
         } else {
           setError(response.error || 'Failed to update account information');
@@ -94,7 +119,7 @@ export const useAccountSettingsData = (): AccountSettingsData => {
         return false;
       }
     },
-    []
+    [accountInfo]
   );
 
   const updatePassword = useCallback(
@@ -106,7 +131,7 @@ export const useAccountSettingsData = (): AccountSettingsData => {
       try {
         setError(null);
 
-        const response = await changePassword(data);
+        const response = await authService.changePassword(data);
 
         if (response.success) {
           return true;

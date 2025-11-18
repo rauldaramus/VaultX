@@ -10,7 +10,7 @@
     "ghcr.io/devcontainers/features/git:1": {}
   },
 
-  "forwardPorts": [4200, 27017, 6379, 3000],
+  "forwardPorts": [4200, 3000],
 
   "customizations": {
     "vscode": {

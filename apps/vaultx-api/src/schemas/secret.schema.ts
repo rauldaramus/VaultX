@@ -22,6 +22,7 @@
  */
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { SecretEnvelope } from '@vaultx/shared';
 import { HydratedDocument } from 'mongoose';
 
 export type SecretDocument = HydratedDocument<Secret>;
@@ -71,7 +72,7 @@ export class Secret {
   metadata!: Record<string, unknown>;
 
   @Prop({ type: Object, required: true })
-  envelope!: Record<string, unknown>;
+  envelope!: SecretEnvelope;
 }
 
 export const SecretSchema = SchemaFactory.createForClass(Secret);

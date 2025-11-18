@@ -46,6 +46,7 @@ const mockTokens: ApiToken[] = [
     lastUsedAt: '2024-12-24T15:30:00Z',
     expiresAt: '2025-12-20T10:00:00Z',
     isActive: true,
+    environment: 'production',
     permissions: ['secrets:read', 'secrets:create', 'secrets:update'],
     usage: {
       requestsToday: 12,
@@ -61,6 +62,7 @@ const mockTokens: ApiToken[] = [
     lastUsedAt: '2024-12-23T09:15:00Z',
     expiresAt: '2025-06-15T14:20:00Z',
     isActive: true,
+    environment: 'development',
     permissions: ['secrets:read'],
     usage: {
       requestsToday: 3,
@@ -76,6 +78,7 @@ const mockTokens: ApiToken[] = [
     lastUsedAt: '2024-11-30T16:45:00Z',
     expiresAt: '2024-12-01T08:00:00Z',
     isActive: false,
+    environment: 'production',
     permissions: ['secrets:read', 'secrets:create'],
     usage: {
       requestsToday: 0,
@@ -122,16 +125,22 @@ export const createApiToken = async (
     ]);
   }
 
+  const environment = data.environment || 'production';
   const newToken: ApiToken = {
     id: `token_${Date.now()}`,
     name: data.name,
-    token: `vx_${data.environment || 'live'}_pk_${Math.random()
-      .toString(36)
-      .substr(2, 32)}`,
+    token: `vx_${
+      environment === 'production' ? 'live' : 'test'
+    }_pk_${Math.random().toString(36).substr(2, 32)}`,
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
     expiresAt: data.expiresAt || null,
     isActive: true,
+    environment: environment as
+      | 'production'
+      | 'staging'
+      | 'development'
+      | 'test',
     permissions: data.permissions || ['secrets:read'],
     usage: {
       requestsToday: 0,

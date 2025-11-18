@@ -29,6 +29,7 @@ export interface ApiToken {
   lastUsedAt: string | null;
   expiresAt: string | null;
   isActive: boolean;
+  environment: 'production' | 'staging' | 'development' | 'test'; // Environment this token is intended for
   permissions: string[];
   usage: {
     requestsToday: number;

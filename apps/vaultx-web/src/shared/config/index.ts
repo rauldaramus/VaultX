@@ -25,7 +25,7 @@ export const APP_CONFIG = {
   description: 'Secure secret management platform',
   version: '1.0.0',
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
     timeout: 10000,
   },
   auth: {

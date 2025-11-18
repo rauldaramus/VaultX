@@ -1,0 +1,684 @@
+/**
+ * @file: auth.service.ts
+ * @version: 0.0.0
+ * @author: Raul Daramus
+ * @date: 2025
+ * Copyright (C) 2025 VaultX by Raul Daramus
+ *
+ * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+ * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
+ * or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+ *
+ * You are free to:
+ *   - Share — copy and redistribute the material in any medium or format
+ *   - Adapt — remix, transform, and build upon the material
+ *
+ * Under the following terms:
+ *   - Attribution — You must give appropriate credit, provide a link to the license,
+ *     and indicate if changes were made.
+ *   - NonCommercial — You may not use the material for commercial purposes.
+ *   - ShareAlike — If you remix, transform, or build upon the material, you must
+ *     distribute your contributions under the same license as the original.
+ */
+
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { OAuthProvider } from '@vaultx/shared';
+import { Types } from 'mongoose';
+
+import type { AppConfig } from '../../config';
+import { AuthTokenRepository } from '../../infrastructure/database/repositories/auth-token.repository';
+import { OAuthAccountRepository } from '../../infrastructure/database/repositories/oauth-account.repository';
+import { SessionRepository } from '../../infrastructure/database/repositories/session.repository';
+import { UserRepository } from '../../infrastructure/database/repositories/user.repository';
+import type { AuthTokenType } from '../../schemas/auth-token.schema';
+import {
+  Session,
+  SessionDeviceInfo,
+  SessionDocument,
+} from '../../schemas/session.schema';
+import type { UserDocument } from '../../schemas/user.schema';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { ConfirmResetPasswordDto } from '../dto/confirm-reset-password.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { RegisterDto } from '../dto/register.dto';
+import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { ResetPasswordRequestDto } from '../dto/reset-password-request.dto';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
+import type { OAuthPassportProfile } from '../strategies/oauth.strategy';
+
+import { PasswordService } from './password.service';
+import { AccessTokenPayload, TokenService } from './token.service';
+
+export interface AuthRequestContext {
+  ipAddress: string;
+  userAgent: string;
+  rememberMe?: boolean;
+}
+
+interface TokenPairResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  scope: string[];
+}
+
+interface LoginResult {
+  user: ReturnType<AuthService['mapUser']>;
+  tokens: TokenPairResponse;
+  expiresIn: number;
+  sessionId: string;
+  requiresVerification?: boolean;
+  verificationToken?: string;
+}
+
+interface OAuthPassportCallbackParams {
+  accessToken: string;
+  refreshToken: string;
+  profile: OAuthPassportProfile;
+}
+
+@Injectable()
+export class AuthService {
+  private readonly defaultScopes = ['vaultx.read', 'vaultx.write'];
+
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly sessionRepository: SessionRepository,
+    private readonly authTokenRepository: AuthTokenRepository,
+    private readonly oauthAccountRepository: OAuthAccountRepository,
+    private readonly passwordService: PasswordService,
+    private readonly tokenService: TokenService,
+    private readonly configService: ConfigService<AppConfig>
+  ) {}
+
+  async validateUser(email: string, password: string): Promise<UserDocument> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!this.passwordService.verify(password, user.password)) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    return user;
+  }
+
+  async validateJwtPayload(
+    payload: AccessTokenPayload
+  ): Promise<AccessTokenPayload> {
+    const user = await this.userRepository.findById(payload.sub);
+    if (!user || user.status !== 'active') {
+      throw new UnauthorizedException('User session is not active');
+    }
+
+    const session = await this.sessionRepository.findById(payload.sessionId);
+    if (!session || !session.isActive) {
+      throw new UnauthorizedException('Session has expired');
+    }
+
+    return payload;
+  }
+
+  async register(
+    dto: RegisterDto,
+    context: AuthRequestContext
+  ): Promise<LoginResult> {
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const existingUser = await this.userRepository.findByEmail(normalizedEmail);
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const user = await this.userRepository.create({
+      email: normalizedEmail,
+      name: dto.name,
+      password: this.passwordService.hash(dto.password),
+      status: 'active',
+      role: 'user',
+      emailVerified: false,
+      twoFactorEnabled: false,
+      preferences: undefined,
+    });
+
+    const session = await this.issueSessionTokens(user, context);
+    const verificationToken = await this.createEmailVerificationToken(user);
+    return {
+      user: this.mapUser(user),
+      tokens: session.tokens,
+      expiresIn: session.tokens.expiresIn,
+      sessionId: session.sessionId,
+      requiresVerification: true,
+      verificationToken,
+    };
+  }
+
+  async login(
+    dto: LoginDto,
+    context: AuthRequestContext,
+    validatedUser?: UserDocument
+  ): Promise<LoginResult> {
+    const user =
+      validatedUser ?? (await this.validateUser(dto.email, dto.password));
+
+    await this.userRepository.updateLastLogin(user.id);
+
+    const session = await this.issueSessionTokens(user, {
+      ...context,
+      rememberMe: dto.rememberMe,
+    });
+
+    return {
+      user: this.mapUser(user),
+      tokens: session.tokens,
+      expiresIn: session.tokens.expiresIn,
+      sessionId: session.sessionId,
+    };
+  }
+
+  async refresh(
+    dto: RefreshTokenDto,
+    rawToken: string | null,
+    context: AuthRequestContext
+  ) {
+    const tokenValue = dto.refreshToken ?? rawToken;
+    if (!tokenValue) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    const hashedToken = this.tokenService.hashToken(tokenValue);
+    const storedToken = await this.authTokenRepository.findValidByHash(
+      hashedToken,
+      'refresh'
+    );
+
+    if (!storedToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.userRepository.findById(
+      storedToken.user.toString()
+    );
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const session = await this.sessionRepository.findById(
+      storedToken.session.toString()
+    );
+    if (!session || !session.isActive) {
+      throw new UnauthorizedException('Session is not active');
+    }
+
+    await this.authTokenRepository.revokeById(storedToken.id);
+
+    const payload = await this.issueSessionTokens(
+      user,
+      {
+        ...context,
+        rememberMe: context.rememberMe ?? session.rememberMe,
+      },
+      session
+    );
+
+    return {
+      tokens: payload.tokens,
+      expiresIn: payload.tokens.expiresIn,
+    };
+  }
+
+  async logout(user: AccessTokenPayload): Promise<void> {
+    await this.sessionRepository.deactivate(user.sessionId);
+    await this.authTokenRepository.revokeBySession(user.sessionId);
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.mapUser(user);
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatePayload: Partial<UserDocument> = {};
+    if (dto.name) {
+      updatePayload.name = dto.name;
+    }
+    if (dto.avatar) {
+      updatePayload.avatar = dto.avatar;
+    }
+
+    if (dto.preferences) {
+      await this.userRepository.updatePreferences(userId, {
+        theme: dto.preferences.theme,
+        language: dto.preferences.language,
+        timezone: dto.preferences.timezone,
+        notifications: dto.preferences.notifications,
+        twoFactorEnabled: dto.preferences.twoFactorEnabled,
+      });
+    }
+
+    const updatedUser = await this.userRepository.upsertById(
+      userId,
+      updatePayload
+    );
+
+    return this.mapUser(updatedUser ?? user);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!this.passwordService.verify(dto.currentPassword, user.password)) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    await this.userRepository.updatePassword(
+      userId,
+      this.passwordService.hash(dto.newPassword)
+    );
+
+    await this.sessionRepository.deactivateUserSessions(userId);
+
+    return {
+      message: 'Password updated successfully',
+      requiresReauth: true,
+    };
+  }
+
+  async requestPasswordReset(dto: ResetPasswordRequestDto) {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      return {
+        message: 'If the email exists, a reset link was sent.',
+      };
+    }
+
+    await this.authTokenRepository.revokeByUserAndType(
+      user.id,
+      'password_reset'
+    );
+    const resetToken = await this.createPasswordResetToken(user);
+
+    return {
+      message: 'If the email exists, a reset link was sent.',
+      resetToken,
+    };
+  }
+
+  async confirmPasswordReset(dto: ConfirmResetPasswordDto) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
+    const hashedToken = this.tokenService.hashToken(dto.token);
+    const storedToken = await this.authTokenRepository.findValidByHash(
+      hashedToken,
+      'password_reset'
+    );
+
+    if (!storedToken) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const userId =
+      storedToken.user instanceof Types.ObjectId
+        ? storedToken.user.toHexString()
+        : (storedToken.user as string);
+
+    await this.userRepository.updatePassword(
+      userId,
+      this.passwordService.hash(dto.newPassword)
+    );
+    await this.authTokenRepository.consumeById(storedToken.id);
+    await this.sessionRepository.deactivateUserSessions(userId);
+
+    return {
+      message: 'Password reset confirmed. Please login with your new password.',
+    };
+  }
+
+  async listSessions(userId: string, currentSessionId?: string) {
+    const sessions = await this.sessionRepository.findActiveByUser(userId);
+    return sessions.map(session => this.mapSession(session, currentSessionId));
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const session = await this.sessionRepository.findActiveByIdAndUser(
+      sessionId,
+      userId
+    );
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    await this.sessionRepository.deactivate(sessionId);
+    await this.authTokenRepository.revokeBySession(sessionId);
+
+    return { message: 'Session revoked successfully' };
+  }
+
+  async verifyEmail(dto: VerifyEmailDto) {
+    const hashedToken = this.tokenService.hashToken(dto.token);
+    const storedToken = await this.authTokenRepository.findValidByHash(
+      hashedToken,
+      'email_verification'
+    );
+
+    if (!storedToken) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    const userId =
+      storedToken.user instanceof Types.ObjectId
+        ? storedToken.user.toHexString()
+        : (storedToken.user as string);
+
+    const user = await this.userRepository.markEmailVerified(userId);
+    await this.authTokenRepository.consumeById(storedToken.id);
+
+    return {
+      message: 'Email verification completed',
+      emailVerified: user?.emailVerified ?? true,
+    };
+  }
+
+  async resendVerification(dto: ResendVerificationDto) {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+    const user = await this.userRepository.findByEmail(normalizedEmail);
+
+    if (!user) {
+      return {
+        message: 'If the account exists, a verification email will be sent.',
+      };
+    }
+
+    if (user.emailVerified) {
+      return {
+        message: 'Email already verified',
+        emailVerified: true,
+      };
+    }
+
+    await this.authTokenRepository.revokeByUserAndType(
+      user.id,
+      'email_verification'
+    );
+    const verificationToken = await this.createEmailVerificationToken(user);
+
+    return {
+      message: 'Verification email sent',
+      verificationToken,
+    };
+  }
+
+  async initiateOAuth(provider: OAuthProvider, redirectUri?: string) {
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const oauthConfig = config?.auth.oauth;
+    if (!oauthConfig) {
+      throw new BadRequestException('OAuth configuration is not available');
+    }
+
+    const target = redirectUri ?? oauthConfig.callbackUrl;
+    const authorizationUrl = new URL(oauthConfig.authorizationUrl);
+    authorizationUrl.searchParams.set('client_id', oauthConfig.clientId);
+    authorizationUrl.searchParams.set('response_type', 'code');
+    authorizationUrl.searchParams.set('redirect_uri', target);
+    authorizationUrl.searchParams.set('scope', oauthConfig.scope.join(' '));
+    authorizationUrl.searchParams.set('state', provider);
+
+    return {
+      authorizationUrl: authorizationUrl.toString(),
+      provider,
+      state: provider,
+    };
+  }
+
+  async handleOAuthCallback(
+    provider: OAuthProvider,
+    code: string,
+    state: string
+  ) {
+    const maybeUser = await this.userRepository.findById(state);
+    if (maybeUser) {
+      await this.oauthAccountRepository.linkAccount({
+        user: maybeUser._id,
+        provider,
+        providerAccountId: code,
+        scopes: [],
+        profile: {},
+      });
+    }
+
+    return {
+      message: 'OAuth callback received',
+      provider,
+      linked: Boolean(maybeUser),
+    };
+  }
+
+  async handleOAuthPassportCallback(
+    params: OAuthPassportCallbackParams
+  ): Promise<Record<string, unknown>> {
+    return {
+      message: 'OAuth passport callback received',
+      provider: params.profile.provider,
+      accessToken: params.accessToken,
+      refreshToken: params.refreshToken,
+      profile: params.profile,
+    };
+  }
+
+  private async issueSessionTokens(
+    user: UserDocument,
+    context: AuthRequestContext,
+    existingSession?: SessionDocument
+  ): Promise<{ sessionId: string; tokens: TokenPairResponse }> {
+    const deviceInfo = this.resolveDeviceInfo(context.userAgent);
+    const refreshTtl = this.resolveRefreshTtl(context.rememberMe);
+    const refresh = this.tokenService.createRefreshToken(refreshTtl);
+
+    const session =
+      existingSession ??
+      (await this.sessionRepository.create({
+        user: user._id,
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+        deviceInfo,
+        expiresAt: refresh.expiresAt,
+        lastActiveAt: new Date(),
+        isActive: true,
+        rememberMe: context.rememberMe ?? false,
+      } as Partial<Session>));
+
+    await this.sessionRepository.updateById(session.id, {
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      deviceInfo,
+      expiresAt: refresh.expiresAt,
+      isActive: true,
+      lastActiveAt: new Date(),
+      rememberMe: context.rememberMe ?? session.rememberMe ?? false,
+    });
+
+    const accessToken = this.tokenService.createAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: session.id,
+    });
+
+    const tokenRecord = await this.authTokenRepository.create({
+      user: user._id,
+      session: session._id,
+      hashedToken: this.tokenService.hashToken(refresh.token),
+      expiresAt: refresh.expiresAt,
+      tokenType: 'refresh',
+      metadata: {
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+      },
+    });
+
+    await this.sessionRepository.updateById(session.id, {
+      refreshTokenId: tokenRecord.id,
+    });
+
+    return {
+      sessionId: session.id,
+      tokens: {
+        accessToken: accessToken.token,
+        refreshToken: refresh.token,
+        tokenType: 'Bearer',
+        expiresIn: accessToken.expiresIn,
+        scope: this.defaultScopes,
+      },
+    };
+  }
+
+  private async createEmailVerificationToken(
+    user: UserDocument
+  ): Promise<string> {
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const ttl = config?.auth.emailVerificationTtl ?? 60 * 60 * 24;
+    return this.createSingleUseToken(user, 'email_verification', ttl);
+  }
+
+  private async createPasswordResetToken(user: UserDocument): Promise<string> {
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const ttl = config?.auth.passwordResetTtl ?? 60 * 30;
+    return this.createSingleUseToken(user, 'password_reset', ttl);
+  }
+
+  private async createSingleUseToken(
+    user: UserDocument,
+    type: AuthTokenType,
+    ttlSeconds: number,
+    metadata?: Record<string, unknown>
+  ): Promise<string> {
+    const token = this.tokenService.createOneTimeToken(ttlSeconds);
+    await this.authTokenRepository.create({
+      user: user._id,
+      session: null,
+      hashedToken: this.tokenService.hashToken(token.token),
+      expiresAt: token.expiresAt,
+      tokenType: type,
+      metadata,
+    });
+    return token.token;
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private resolveRefreshTtl(rememberMe?: boolean): number {
+    const config = this.configService.get<AppConfig>('config', { infer: true });
+    const baseTtl = config?.auth.refreshTokenTtl ?? 60 * 60 * 24 * 7; // 7 days default
+    const extendedTtl = 60 * 60 * 24 * 30; // 30 days for remember me
+    return rememberMe ? extendedTtl : baseTtl;
+  }
+
+  private mapUser(user: UserDocument) {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      avatar: user.avatar,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: user.updatedAt?.toISOString() ?? new Date().toISOString(),
+      lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      preferences: user.preferences,
+    };
+  }
+
+  private mapSession(session: SessionDocument, currentSessionId?: string) {
+    const id = session.id;
+    const userId =
+      session.user instanceof Types.ObjectId
+        ? session.user.toHexString()
+        : (session.user as string);
+
+    return {
+      id,
+      userId,
+      deviceInfo: session.deviceInfo,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+      createdAt: session.createdAt?.toISOString() ?? new Date().toISOString(),
+      lastActiveAt:
+        session.lastActiveAt?.toISOString() ?? new Date().toISOString(),
+      expiresAt: session.expiresAt?.toISOString() ?? new Date().toISOString(),
+      isActive: session.isActive,
+      isCurrent: currentSessionId ? id === currentSessionId : undefined,
+    };
+  }
+
+  private resolveDeviceInfo(userAgent?: string): SessionDeviceInfo {
+    const ua = userAgent ?? 'Unknown';
+    const isMobile = /mobile|android|iphone|ipad/i.test(ua);
+    const browser = /chrome/i.test(ua)
+      ? 'Chrome'
+      : /safari/i.test(ua) && !/chrome/i.test(ua)
+      ? 'Safari'
+      : /firefox/i.test(ua)
+      ? 'Firefox'
+      : /edg/i.test(ua)
+      ? 'Edge'
+      : 'Unknown';
+
+    const os = /windows/i.test(ua)
+      ? 'Windows'
+      : /mac os|macintosh/i.test(ua)
+      ? 'macOS'
+      : /android/i.test(ua)
+      ? 'Android'
+      : /iphone|ipad|ios/i.test(ua)
+      ? 'iOS'
+      : /linux/i.test(ua)
+      ? 'Linux'
+      : 'Unknown';
+
+    return {
+      browser,
+      os,
+      device: isMobile ? 'Mobile' : 'Desktop',
+      isMobile,
+    };
+  }
+}

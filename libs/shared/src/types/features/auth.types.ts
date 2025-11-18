@@ -20,7 +20,7 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { User } from '../entities/user.types';
+import type { User } from '../entities/user.types.js';
 
 export interface AuthState {
   user: User | null;
@@ -31,18 +31,79 @@ export interface AuthState {
 export interface LoginCredentials {
   email: string;
   password: string;
+  rememberMe?: boolean;
+}
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  scope: string[];
 }
 
 export interface LoginResponse {
   user: User;
+  tokens: TokenPair;
+  expiresIn: number;
+  sessionId: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+  confirmPassword: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  tokens: TokenPair;
+  expiresIn: number;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+}
+
+export interface ConfirmResetRequest {
   token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+export type OAuthProvider = 'google' | 'github' | 'microsoft';
+
+export interface DeviceInfo {
+  browser: string;
+  os: string;
+  device: string;
+  isMobile: boolean;
 }
 
 // Session management types
 export interface ActiveSession {
   id: string;
-  device: string;
-  location: string;
-  lastActive: string;
-  current: boolean;
+  userId: string;
+  deviceInfo: DeviceInfo;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+  lastActiveAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  isCurrent?: boolean;
 }

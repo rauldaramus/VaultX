@@ -245,14 +245,7 @@ export default function DashboardHomePage() {
             <div className="text-2xl font-bold transition-all duration-300 hover:scale-105 hover:text-primary">
               {stats?.plan || 'On-Premise'}
             </div>
-            <div className="text-xs text-muted-foreground">
-              <Link
-                href="#"
-                className="text-primary hover:underline transition-all duration-200 hover:text-primary/80"
-              >
-                Access to Full functionality
-              </Link>
-            </div>
+            <div className="text-xs text-muted-foreground"></div>
           </CardContent>
         </Card>
       </div>
