@@ -235,7 +235,7 @@ export class AuthService {
       user,
       {
         ...context,
-        rememberMe: context.rememberMe,
+        rememberMe: context.rememberMe ?? session.rememberMe,
       },
       session
     );
@@ -521,6 +521,7 @@ export class AuthService {
         expiresAt: refresh.expiresAt,
         lastActiveAt: new Date(),
         isActive: true,
+        rememberMe: context.rememberMe ?? false,
       } as Partial<Session>));
 
     await this.sessionRepository.updateById(session.id, {
@@ -530,6 +531,7 @@ export class AuthService {
       expiresAt: refresh.expiresAt,
       isActive: true,
       lastActiveAt: new Date(),
+      rememberMe: context.rememberMe ?? session.rememberMe ?? false,
     });
 
     const accessToken = this.tokenService.createAccessToken({
@@ -605,8 +607,9 @@ export class AuthService {
 
   private resolveRefreshTtl(rememberMe?: boolean): number {
     const config = this.configService.get<AppConfig>('config', { infer: true });
-    const baseTtl = config?.auth.refreshTokenTtl ?? 60 * 60 * 24 * 7;
-    return rememberMe ? baseTtl * 2 : baseTtl;
+    const baseTtl = config?.auth.refreshTokenTtl ?? 60 * 60 * 24 * 7; // 7 days default
+    const extendedTtl = 60 * 60 * 24 * 30; // 30 days for remember me
+    return rememberMe ? extendedTtl : baseTtl;
   }
 
   private mapUser(user: UserDocument) {

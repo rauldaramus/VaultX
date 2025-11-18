@@ -37,26 +37,47 @@ const ACCESS_TOKEN_KEY = APP_CONFIG.auth.tokenKey;
 const REFRESH_TOKEN_KEY = APP_CONFIG.auth.refreshTokenKey;
 const LEGACY_ACCESS_TOKEN_KEY = 'token';
 const LEGACY_REFRESH_TOKEN_KEY = 'refresh_token';
+const REMEMBER_ME_KEY = 'auth-remember-me';
 
-const readAccessToken = () =>
-  localStorage.getItem(ACCESS_TOKEN_KEY) ??
-  localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY);
+const getStorage = () => {
+  const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+  return rememberMe ? localStorage : sessionStorage;
+};
 
-const storeRefreshToken = (token: string) => {
-  localStorage.setItem(REFRESH_TOKEN_KEY, token);
+const readAccessToken = () => {
+  const storage = getStorage();
+  return (
+    storage.getItem(ACCESS_TOKEN_KEY) ??
+    storage.getItem(LEGACY_ACCESS_TOKEN_KEY) ??
+    localStorage.getItem(ACCESS_TOKEN_KEY) ??
+    localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY)
+  );
+};
+
+const storeRefreshToken = (token: string, rememberMe = false) => {
+  const storage = rememberMe ? localStorage : sessionStorage;
+  storage.setItem(REFRESH_TOKEN_KEY, token);
   if (REFRESH_TOKEN_KEY !== LEGACY_REFRESH_TOKEN_KEY) {
-    localStorage.setItem(LEGACY_REFRESH_TOKEN_KEY, token);
+    storage.setItem(LEGACY_REFRESH_TOKEN_KEY, token);
   }
 };
 
-const readRefreshToken = () =>
-  localStorage.getItem(REFRESH_TOKEN_KEY) ??
-  localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY);
+const readRefreshToken = () => {
+  const storage = getStorage();
+  return (
+    storage.getItem(REFRESH_TOKEN_KEY) ??
+    storage.getItem(LEGACY_REFRESH_TOKEN_KEY) ??
+    localStorage.getItem(REFRESH_TOKEN_KEY) ??
+    localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY)
+  );
+};
 
 const clearRefreshToken = () => {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   if (REFRESH_TOKEN_KEY !== LEGACY_REFRESH_TOKEN_KEY) {
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
   }
 };
 
@@ -106,8 +127,15 @@ export function useAuth() {
       const response = await authService.login(loginRequest);
 
       if (response.success && response.data) {
-        storeRefreshToken(response.data.tokens.refreshToken);
-        login(response.data.user, response.data.tokens.accessToken);
+        storeRefreshToken(
+          response.data.tokens.refreshToken,
+          credentials.rememberMe
+        );
+        login(
+          response.data.user,
+          response.data.tokens.accessToken,
+          credentials.rememberMe
+        );
         return { success: true };
       } else {
         return { success: false, error: response.error || 'Login failed' };
@@ -167,24 +195,23 @@ export function useAuth() {
         return false;
       }
 
+      const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
       const response = await authService.refreshToken({ refreshToken });
 
       if (response.success && response.data) {
         if (user) {
-          login(user, response.data.tokens.accessToken);
+          login(user, response.data.tokens.accessToken, rememberMe);
         } else {
-          localStorage.setItem(
-            ACCESS_TOKEN_KEY,
-            response.data.tokens.accessToken
-          );
+          const storage = getStorage();
+          storage.setItem(ACCESS_TOKEN_KEY, response.data.tokens.accessToken);
           if (ACCESS_TOKEN_KEY !== LEGACY_ACCESS_TOKEN_KEY) {
-            localStorage.setItem(
+            storage.setItem(
               LEGACY_ACCESS_TOKEN_KEY,
               response.data.tokens.accessToken
             );
           }
         }
-        storeRefreshToken(response.data.tokens.refreshToken);
+        storeRefreshToken(response.data.tokens.refreshToken, rememberMe);
         return true;
       }
       return false;

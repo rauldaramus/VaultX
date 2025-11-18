@@ -65,6 +65,9 @@ export class Session {
 
   @Prop({ type: String, default: null })
   refreshTokenId?: string | null;
+
+  @Prop({ type: Boolean, default: false })
+  rememberMe?: boolean;
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);

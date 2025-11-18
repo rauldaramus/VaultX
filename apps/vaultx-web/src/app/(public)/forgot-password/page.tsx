@@ -44,72 +44,16 @@ export default function ForgotPasswordPage() {
       </header>
 
       <main className="flex-1 flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-5xl grid gap-10 lg:grid-cols-2 items-center">
-          <section className="space-y-6 animate-fade-in-left opacity-0">
-            <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                Secure recovery flow
-              </span>
-              <h2 className="text-4xl font-bold tracking-tight">
-                Reset your access securely.
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-lg">
-                VaultX uses signed, single-use reset links. Provide your email
-                and we&apos;ll send the secure instructions instantly.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                {
-                  title: 'Single-use links',
-                  description:
-                    'Each reset link expires after one use or after 15 minutes.',
-                },
-                {
-                  title: 'Device fingerprinting',
-                  description:
-                    'We detect unusual activity and ask for additional verification.',
-                },
-                {
-                  title: '24/7 support',
-                  description:
-                    'Our on-call SREs can help you regain access in critical incidents.',
-                },
-              ].map(feature => (
-                <div
-                  key={feature.title}
-                  className="p-4 rounded-xl border border-border/60 bg-card/40 backdrop-blur hover:border-primary/40 transition-all duration-300"
-                >
-                  <p className="font-semibold mb-1">{feature.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              Need immediate assistance?{' '}
-              <Link href="/contact" className="text-primary hover:underline">
-                Contact the incident desk
-              </Link>
-              .
-            </div>
-          </section>
-
-          <div>
-            <div className="text-center mb-8 animate-fade-in-up opacity-0">
-              <h3 className="text-3xl font-bold mb-2">Forgot password</h3>
-              <p className="text-muted-foreground">
-                Enter the email associated with your workspace and follow the
-                secure recovery steps.
-              </p>
-            </div>
-
-            <ForgotPasswordForm />
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8 animate-fade-in-up opacity-0">
+            <h2 className="text-3xl font-bold mb-2">Forgot password</h2>
+            <p className="text-muted-foreground">
+              Enter the email associated with your workspace and follow the
+              secure recovery steps.
+            </p>
           </div>
+
+          <ForgotPasswordForm />
         </div>
       </main>
 
