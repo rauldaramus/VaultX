@@ -23,7 +23,7 @@
 
 import type { ConfigService } from '@nestjs/config';
 
-import type { AppConfig } from '../config';
+import type { AppConfig } from '../../config';
 
 import { TokenService } from './token.service';
 

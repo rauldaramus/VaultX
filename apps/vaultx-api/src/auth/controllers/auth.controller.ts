@@ -39,23 +39,22 @@ import { createSuccessResponse } from '@vaultx/shared';
 import type { OAuthProvider } from '@vaultx/shared';
 import type { Request } from 'express';
 
-import type { UserDocument } from '../schemas/user.schema';
-
-import { AuthService, AuthRequestContext } from './auth.service';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
-import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { RegisterDto } from './dto/register.dto';
-import { ResendVerificationDto } from './dto/resend-verification.dto';
-import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { SessionActivityInterceptor } from './interceptors/session-activity.interceptor';
-import type { AccessTokenPayload } from './token.service';
+import type { UserDocument } from '../../schemas/user.schema';
+import { CurrentUser } from '../decorators/current-user.decorator';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { ConfirmResetPasswordDto } from '../dto/confirm-reset-password.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { RegisterDto } from '../dto/register.dto';
+import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { ResetPasswordRequestDto } from '../dto/reset-password-request.dto';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
+import { SessionActivityInterceptor } from '../interceptors/session-activity.interceptor';
+import { AuthService, AuthRequestContext } from '../services/auth.service';
+import type { AccessTokenPayload } from '../services/token.service';
 
 type RequestWithUser = Request & { user?: UserDocument };
 

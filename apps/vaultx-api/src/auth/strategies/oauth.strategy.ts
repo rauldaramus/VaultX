@@ -27,7 +27,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-oauth2';
 
 import type { AppConfig } from '../../config';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 
 export interface OAuthPassportProfile {
   provider: string;

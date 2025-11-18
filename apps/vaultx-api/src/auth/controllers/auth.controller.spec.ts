@@ -24,9 +24,10 @@
 import type { OAuthProvider } from '@vaultx/shared';
 import type { Request } from 'express';
 
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { AuthService } from '../services/auth.service';
+
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 describe('AuthController', () => {
   let controller: AuthController;

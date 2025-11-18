@@ -32,30 +32,30 @@ import { ConfigService } from '@nestjs/config';
 import type { OAuthProvider } from '@vaultx/shared';
 import { Types } from 'mongoose';
 
-import type { AppConfig } from '../config';
-import { AuthTokenRepository } from '../infrastructure/database/repositories/auth-token.repository';
-import { OAuthAccountRepository } from '../infrastructure/database/repositories/oauth-account.repository';
-import { SessionRepository } from '../infrastructure/database/repositories/session.repository';
-import { UserRepository } from '../infrastructure/database/repositories/user.repository';
-import type { AuthTokenType } from '../schemas/auth-token.schema';
+import type { AppConfig } from '../../config';
+import { AuthTokenRepository } from '../../infrastructure/database/repositories/auth-token.repository';
+import { OAuthAccountRepository } from '../../infrastructure/database/repositories/oauth-account.repository';
+import { SessionRepository } from '../../infrastructure/database/repositories/session.repository';
+import { UserRepository } from '../../infrastructure/database/repositories/user.repository';
+import type { AuthTokenType } from '../../schemas/auth-token.schema';
 import {
   Session,
   SessionDeviceInfo,
   SessionDocument,
-} from '../schemas/session.schema';
-import type { UserDocument } from '../schemas/user.schema';
+} from '../../schemas/session.schema';
+import type { UserDocument } from '../../schemas/user.schema';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { ConfirmResetPasswordDto } from '../dto/confirm-reset-password.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { RegisterDto } from '../dto/register.dto';
+import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { ResetPasswordRequestDto } from '../dto/reset-password-request.dto';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
+import type { OAuthPassportProfile } from '../strategies/oauth.strategy';
 
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
-import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { RegisterDto } from './dto/register.dto';
-import { ResendVerificationDto } from './dto/resend-verification.dto';
-import { ResetPasswordRequestDto } from './dto/reset-password-request.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
 import { PasswordService } from './password.service';
-import type { OAuthPassportProfile } from './strategies/oauth.strategy';
 import { AccessTokenPayload, TokenService } from './token.service';
 
 export interface AuthRequestContext {

@@ -26,16 +26,16 @@ import { PassportModule } from '@nestjs/passport';
 
 import { DatabaseModule } from '../infrastructure/database/database.module';
 
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthController } from './controllers/auth.controller';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { SessionActivityInterceptor } from './interceptors/session-activity.interceptor';
-import { PasswordService } from './password.service';
+import { AuthService } from './services/auth.service';
+import { PasswordService } from './services/password.service';
+import { TokenService } from './services/token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { VaultxOAuthStrategy } from './strategies/oauth.strategy';
-import { TokenService } from './token.service';
 
 @Module({
   imports: [

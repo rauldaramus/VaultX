@@ -31,6 +31,8 @@ import { createLogger } from '../common/utils/logger.util';
 import type { AppConfig } from '../config';
 import { SecretRepository } from '../infrastructure/database/repositories/secret.repository';
 import { UserRepository } from '../infrastructure/database/repositories/user.repository';
+import type { Secret } from '../schemas/secret.schema';
+import type { User } from '../schemas/user.schema';
 
 const logger = createLogger('SeedScript');
 
@@ -54,7 +56,7 @@ async function run() {
     const secretRepository = app.get(SecretRepository);
 
     for (const user of seedPayload.users) {
-      await userRepository.upsertById(user.id, {
+      const payload: Partial<User> = {
         email: user.email,
         name: user.name,
         role: user.role,
@@ -62,7 +64,8 @@ async function run() {
         password: hashPassword(user.password),
         emailVerified: user.emailVerified ?? true,
         twoFactorEnabled: user.twoFactorEnabled ?? false,
-      } as any);
+      };
+      await userRepository.upsertById(user.id, payload);
       logger.info(`Ensured user ${user.email}`);
     }
 
@@ -70,29 +73,27 @@ async function run() {
       const passphrase =
         secret.passphrase ?? `${secret.ownerId}-default-passphrase`;
 
-      await secretRepository.upsertById(
-        secret.title,
-        {
-          title: secret.title,
-          content: secret.plaintext,
-          type: secret.type ?? 'text',
-          status: 'Active',
-          tags: secret.tags ?? [],
-          expiresAt: secret.expiresAt ? new Date(secret.expiresAt) : null,
-          isViewed: false,
-          viewCount: 0,
-          lastViewedAt: null,
-          createdBy: secret.ownerId,
-          isProtected: secret.isProtected ?? true,
-          maxViews: secret.maxViews ?? null,
-          allowedIPs: secret.allowedIPs ?? [],
-          metadata: {
-            ...secret.metadata,
-            seeded: true,
-          },
-        } as any,
-        { passphrase }
-      );
+      const payload: Partial<Secret> = {
+        title: secret.title,
+        content: secret.plaintext,
+        type: secret.type ?? 'text',
+        status: 'Active',
+        tags: secret.tags ?? [],
+        expiresAt: secret.expiresAt ? new Date(secret.expiresAt) : null,
+        isViewed: false,
+        viewCount: 0,
+        lastViewedAt: null,
+        createdBy: secret.ownerId,
+        isProtected: secret.isProtected ?? true,
+        maxViews: secret.maxViews ?? null,
+        allowedIPs: secret.allowedIPs ?? [],
+        metadata: {
+          ...secret.metadata,
+          seeded: true,
+        },
+      };
+
+      await secretRepository.upsertById(secret.title, payload, { passphrase });
 
       logger.info(`Seeded secret "${secret.title}" for user ${secret.ownerId}`);
     }
