@@ -1,5 +1,5 @@
 /**
- * @file: index.ts
+ * @file: jest-e2e.config.ts
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,9 +20,20 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Placeholder for shared utilities
-// (cn is already in @/lib/utils by default with shadcn/ui)
-// Example:
-// export * from "./date-formatter";
+import type { Config } from 'jest';
 
-export * from './http-client';
+const config: Config = {
+  displayName: '@vaultx-monorepo/vaultx-api:e2e',
+  preset: '../../jest.preset.js',
+  testEnvironment: 'node',
+  transform: {
+    '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
+  },
+  moduleFileExtensions: ['ts', 'js', 'json'],
+  rootDir: '.',
+  testMatch: ['**/test/**/*.e2e-spec.ts'],
+  coverageDirectory: '../../coverage/apps/vaultx-api-e2e',
+  testTimeout: 30000,
+};
+
+export default config;

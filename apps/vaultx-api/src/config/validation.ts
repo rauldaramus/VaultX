@@ -105,5 +105,7 @@ export const validationSchema = Joi.object({
   OTEL_SERVICE_NAME: Joi.string().default('vaultx-api'),
   OTEL_PROM_PORT: Joi.number().port().default(9464),
 
-  CORS_ORIGINS: Joi.string().default('http://localhost:3000'),
+  CORS_ORIGINS: Joi.string().default(
+    'http://localhost:3000,http://localhost:4200'
+  ),
 });

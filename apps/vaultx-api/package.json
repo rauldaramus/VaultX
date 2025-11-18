@@ -25,6 +25,7 @@
     "ioredis": "^5.3.2",
     "joi": "^17.13.3",
     "mongoose": "^8.9.2",
+    "mongosh": "^2.5.9",
     "pino": "^9.13.1",
     "reflect-metadata": "^0.2.2"
   },

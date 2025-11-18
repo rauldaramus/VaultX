@@ -21,11 +21,10 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { randomBytes, scryptSync } from 'node:crypto';
-
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { resolveSeedPayload } from '@vaultx/shared';
+import { hashSync, genSaltSync } from 'bcryptjs';
 
 import { AppModule } from '../app.module';
 import { createLogger } from '../common/utils/logger.util';
@@ -36,9 +35,8 @@ import { UserRepository } from '../infrastructure/database/repositories/user.rep
 const logger = createLogger('SeedScript');
 
 function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const hashed = scryptSync(password, salt, 32).toString('hex');
-  return `${salt}:${hashed}`;
+  const salt = genSaltSync(12);
+  return hashSync(password, salt);
 }
 
 async function run() {
@@ -57,7 +55,6 @@ async function run() {
 
     for (const user of seedPayload.users) {
       await userRepository.upsertById(user.id, {
-        _id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
@@ -65,7 +62,7 @@ async function run() {
         password: hashPassword(user.password),
         emailVerified: user.emailVerified ?? true,
         twoFactorEnabled: user.twoFactorEnabled ?? false,
-      });
+      } as any);
       logger.info(`Ensured user ${user.email}`);
     }
 
@@ -76,7 +73,6 @@ async function run() {
       await secretRepository.upsertById(
         secret.title,
         {
-          _id: secret.title,
           title: secret.title,
           content: secret.plaintext,
           type: secret.type ?? 'text',
@@ -94,7 +90,7 @@ async function run() {
             ...secret.metadata,
             seeded: true,
           },
-        },
+        } as any,
         { passphrase }
       );
 

@@ -26,6 +26,31 @@ import type { AuthState, User } from '@vaultx/shared';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { APP_CONFIG } from '@/shared/config';
+
+const ACCESS_TOKEN_KEY = APP_CONFIG.auth.tokenKey;
+const LEGACY_ACCESS_TOKEN_KEY = 'token';
+
+const storeAccessToken = (token: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  if (ACCESS_TOKEN_KEY !== LEGACY_ACCESS_TOKEN_KEY) {
+    localStorage.setItem(LEGACY_ACCESS_TOKEN_KEY, token);
+  }
+};
+
+const removeAccessToken = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  if (ACCESS_TOKEN_KEY !== LEGACY_ACCESS_TOKEN_KEY) {
+    localStorage.removeItem(LEGACY_ACCESS_TOKEN_KEY);
+  }
+};
+
 interface AuthStore extends AuthState {
   login: (user: User, token: string) => void;
   logout: () => void;
@@ -39,11 +64,11 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       isLoading: false,
       login: (user: User, token: string) => {
-        localStorage.setItem('token', token);
+        storeAccessToken(token);
         set({ user, isAuthenticated: true, isLoading: false });
       },
       logout: () => {
-        localStorage.removeItem('token');
+        removeAccessToken();
         set({ user: null, isAuthenticated: false, isLoading: false });
       },
       setLoading: (isLoading: boolean) => set({ isLoading }),

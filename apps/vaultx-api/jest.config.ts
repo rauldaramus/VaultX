@@ -1,5 +1,5 @@
 /**
- * @file: index.ts
+ * @file: jest.config.ts
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,9 +20,26 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Placeholder for shared utilities
-// (cn is already in @/lib/utils by default with shadcn/ui)
-// Example:
-// export * from "./date-formatter";
+import type { Config } from 'jest';
 
-export * from './http-client';
+const config: Config = {
+  displayName: '@vaultx-monorepo/vaultx-api',
+  preset: '../../jest.preset.js',
+  testEnvironment: 'node',
+  transform: {
+    '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
+  },
+  moduleFileExtensions: ['ts', 'js', 'json'],
+  coverageDirectory: '../../coverage/apps/vaultx-api',
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.spec.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.dto.ts',
+    '!src/main.ts',
+  ],
+  testMatch: ['**/*.spec.ts'],
+  passWithNoTests: true,
+};
+
+export default config;

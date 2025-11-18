@@ -1,5 +1,5 @@
 /**
- * @file: index.ts
+ * @file: middleware.ts
  * @author: Raul Daramus
  * @date: 2025
  * Copyright (C) 2025 VaultX by Raul Daramus
@@ -20,9 +20,23 @@
  *     distribute your contributions under the same license as the original.
  */
 
-// Placeholder for shared utilities
-// (cn is already in @/lib/utils by default with shadcn/ui)
-// Example:
-// export * from "./date-formatter";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export * from './http-client';
+const API_PROXY_TARGET =
+  process.env.NEXT_API_PROXY_TARGET ?? 'http://localhost:3000';
+
+export function middleware(request: NextRequest) {
+  // Only proxy /api/* requests
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const apiUrl = `${API_PROXY_TARGET}${request.nextUrl.pathname}${request.nextUrl.search}`;
+
+    return NextResponse.rewrite(new URL(apiUrl));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: '/api/:path*',
+};

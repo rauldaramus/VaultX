@@ -267,7 +267,9 @@ export const configuration = (): { config: AppConfig } => {
       },
       security: {
         corsOrigins:
-          corsOrigins.length > 0 ? corsOrigins : ['http://localhost:3000'],
+          corsOrigins.length > 0
+            ? corsOrigins
+            : ['http://localhost:3000', 'http://localhost:4200'],
       },
     },
   };

@@ -31,6 +31,34 @@ import type {
 } from '../api/models/auth.model';
 import { authService } from '../api/services/auth.service';
 import { useAuthStore } from '../model/auth.store';
+import { APP_CONFIG } from '@/shared/config';
+
+const ACCESS_TOKEN_KEY = APP_CONFIG.auth.tokenKey;
+const REFRESH_TOKEN_KEY = APP_CONFIG.auth.refreshTokenKey;
+const LEGACY_ACCESS_TOKEN_KEY = 'token';
+const LEGACY_REFRESH_TOKEN_KEY = 'refresh_token';
+
+const readAccessToken = () =>
+  localStorage.getItem(ACCESS_TOKEN_KEY) ??
+  localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY);
+
+const storeRefreshToken = (token: string) => {
+  localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  if (REFRESH_TOKEN_KEY !== LEGACY_REFRESH_TOKEN_KEY) {
+    localStorage.setItem(LEGACY_REFRESH_TOKEN_KEY, token);
+  }
+};
+
+const readRefreshToken = () =>
+  localStorage.getItem(REFRESH_TOKEN_KEY) ??
+  localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY);
+
+const clearRefreshToken = () => {
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  if (REFRESH_TOKEN_KEY !== LEGACY_REFRESH_TOKEN_KEY) {
+    localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
+  }
+};
 
 export function useAuth() {
   const { user, isAuthenticated, isLoading, login, logout, setLoading } =
@@ -39,7 +67,7 @@ export function useAuth() {
   // Check authentication status on load
   useEffect(() => {
     const checkAuthStatus = () => {
-      const token = localStorage.getItem('token');
+      const token = readAccessToken();
       const storedUser = localStorage.getItem('auth-storage');
 
       if (token && storedUser) {
@@ -53,7 +81,7 @@ export function useAuth() {
             setLoading(false);
             return;
           }
-        } catch {
+        } catch (error) {
           // eslint-disable-next-line no-console
           console.error('Error parsing stored auth data:', error);
         }
@@ -72,18 +100,21 @@ export function useAuth() {
       const loginRequest: LoginApiRequest = {
         email: credentials.email,
         password: credentials.password,
-        rememberMe: false,
+        rememberMe: credentials.rememberMe ?? false,
       };
 
       const response = await authService.login(loginRequest);
 
       if (response.success && response.data) {
+        storeRefreshToken(response.data.tokens.refreshToken);
         login(response.data.user, response.data.tokens.accessToken);
         return { success: true };
       } else {
         return { success: false, error: response.error || 'Login failed' };
       }
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Login error:', error);
       return { success: false, error: 'Network error' };
     } finally {
       setLoading(false);
@@ -96,6 +127,7 @@ export function useAuth() {
       const response = await authService.register(userData);
 
       if (response.success && response.data) {
+        storeRefreshToken(response.data.tokens.refreshToken);
         login(response.data.user, response.data.tokens.accessToken);
         return { success: true };
       } else {
@@ -105,7 +137,9 @@ export function useAuth() {
           validationErrors: response.validationErrors,
         };
       }
-    } catch {
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Registration error:', error);
       return { success: false, error: 'Network error' };
     } finally {
       setLoading(false);
@@ -116,8 +150,9 @@ export function useAuth() {
     setLoading(true);
     try {
       await authService.logout();
+      clearRefreshToken();
       logout();
-    } catch {
+    } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Logout error:', error);
     } finally {
@@ -127,21 +162,33 @@ export function useAuth() {
 
   const refreshToken = async () => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) return false;
+      const refreshToken = readRefreshToken();
+      if (!refreshToken) {
+        return false;
+      }
 
       const response = await authService.refreshToken({ refreshToken });
 
       if (response.success && response.data) {
-        localStorage.setItem('token', response.data.tokens.accessToken);
-        localStorage.setItem(
-          'refresh_token',
-          response.data.tokens.refreshToken
-        );
+        if (user) {
+          login(user, response.data.tokens.accessToken);
+        } else {
+          localStorage.setItem(
+            ACCESS_TOKEN_KEY,
+            response.data.tokens.accessToken
+          );
+          if (ACCESS_TOKEN_KEY !== LEGACY_ACCESS_TOKEN_KEY) {
+            localStorage.setItem(
+              LEGACY_ACCESS_TOKEN_KEY,
+              response.data.tokens.accessToken
+            );
+          }
+        }
+        storeRefreshToken(response.data.tokens.refreshToken);
         return true;
       }
       return false;
-    } catch {
+    } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Token refresh error:', error);
       return false;

@@ -130,7 +130,8 @@ describe('AuthController', () => {
           ipAddress: expect.any(String),
           userAgent: 'test-agent',
           rememberMe: false,
-        })
+        }),
+        undefined
       );
     });
 
@@ -149,7 +150,8 @@ describe('AuthController', () => {
         loginDto,
         expect.objectContaining({
           rememberMe: true,
-        })
+        }),
+        undefined
       );
     });
   });
