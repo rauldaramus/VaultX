@@ -60,6 +60,8 @@ const removeAccessToken = () => {
     sessionStorage.removeItem(LEGACY_ACCESS_TOKEN_KEY);
   }
   localStorage.removeItem(REMEMBER_ME_KEY);
+  // Clear session validation flag
+  sessionStorage.removeItem('auth-session-validated');
 };
 
 interface AuthStore extends AuthState {

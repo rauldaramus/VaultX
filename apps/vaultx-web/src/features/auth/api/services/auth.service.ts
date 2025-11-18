@@ -43,15 +43,22 @@ import type {
 
 const AUTH_BASE_PATH = '/auth';
 
+const readTokenFromStorage = (storage: Storage) => {
+  return (
+    storage.getItem(APP_CONFIG.auth.tokenKey) ??
+    storage.getItem('token') ??
+    null
+  );
+};
+
 const resolveStoredToken = (): string | null => {
   if (typeof window === 'undefined') {
     return null;
   }
 
+  // Look in both storages because session-based logins keep tokens in sessionStorage
   return (
-    localStorage.getItem(APP_CONFIG.auth.tokenKey) ??
-    localStorage.getItem('token') ??
-    null
+    readTokenFromStorage(localStorage) ?? readTokenFromStorage(sessionStorage)
   );
 };
 
@@ -112,17 +119,23 @@ class AuthService {
   }
 
   static async getCurrentUser(): Promise<ApiResponse<UserApiModel>> {
-    const response = await buildRequest<{ user: UserApiModel }>(
+    const response = await buildRequest<UserApiModel | { user: UserApiModel }>(
       '/me',
       { method: 'GET' },
       true
     );
 
     if (response.success && response.data) {
-      return {
-        ...response,
-        data: response.data.user,
-      };
+      const data =
+        (response.data as { user?: UserApiModel }).user ??
+        (response.data as UserApiModel);
+
+      if (data) {
+        return {
+          ...response,
+          data,
+        };
+      }
     }
 
     return response as ApiResponse<UserApiModel>;
