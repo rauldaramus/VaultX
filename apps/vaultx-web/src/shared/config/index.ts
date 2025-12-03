@@ -20,12 +20,15 @@
  *     distribute your contributions under the same license as the original.
  */
 
+const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || `/api/${API_VERSION}`;
+
 export const APP_CONFIG = {
   name: 'VaultX',
   description: 'Secure secret management platform',
   version: '1.0.0',
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
+    baseUrl: API_BASE_URL,
     timeout: 10000,
   },
   auth: {
