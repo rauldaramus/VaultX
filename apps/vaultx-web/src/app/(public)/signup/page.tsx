@@ -37,12 +37,6 @@ export default function SignUpPage() {
             </div>
             <h1 className="text-xl font-bold">VaultX</h1>
           </div>
-          <div className="hidden md:flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground">Already using VaultX?</span>
-            <Link href="/login" className="text-primary hover:underline">
-              Sign in
-            </Link>
-          </div>
         </div>
       </header>
 
@@ -50,10 +44,6 @@ export default function SignUpPage() {
         <div className="w-full max-w-6xl grid gap-12 lg:grid-cols-[1.1fr,0.9fr] items-center">
           <section className="space-y-8 animate-fade-in-left opacity-0">
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                Launch your secure workspace
-              </span>
               <h2 className="text-4xl font-bold tracking-tight">
                 Sign up for VaultX and unlock zero-trust secrets management in
                 minutes.
@@ -97,7 +87,7 @@ export default function SignUpPage() {
 
             <div className="grid gap-6 sm:grid-cols-3 p-4 border rounded-2xl bg-muted/40">
               <div>
-                <p className="text-3xl font-bold">15 min</p>
+                <p className="text-3xl font-bold">10 min</p>
                 <p className="text-xs text-muted-foreground">
                   Average onboarding
                 </p>

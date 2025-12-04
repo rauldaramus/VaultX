@@ -185,6 +185,9 @@ export const configuration = (): { config: AppConfig } => {
   const activeKid =
     jwtKeys.find(key => key.kid === fallbackKid)?.kid ?? jwtKeys[0].kid;
 
+  // Force v1 prefix if no explicit APP_GLOBAL_PREFIX is set
+  const globalPrefix = process.env.APP_GLOBAL_PREFIX ?? 'api/v1';
+
   return {
     config: {
       app: {
@@ -192,7 +195,7 @@ export const configuration = (): { config: AppConfig } => {
         env: (process.env.APP_ENV as AppConfig['app']['env']) ?? 'development',
         host: process.env.APP_HOST ?? '0.0.0.0',
         port: Number(process.env.APP_PORT ?? 3333),
-        globalPrefix: process.env.APP_GLOBAL_PREFIX ?? 'api',
+        globalPrefix,
       },
       auth: {
         accessTokenSecret:

@@ -20,18 +20,61 @@
  *     distribute your contributions under the same license as the original.
  */
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const API_PROXY_TARGET =
   process.env.NEXT_API_PROXY_TARGET ?? 'http://localhost:3000';
 
-export function middleware(request: NextRequest) {
-  // Only proxy /api/* requests
+export async function middleware(request: NextRequest) {
+  // Only handle API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    const apiUrl = `${API_PROXY_TARGET}${request.nextUrl.pathname}${request.nextUrl.search}`;
+    try {
+      // Build the backend URL
+      const backendUrl = `${API_PROXY_TARGET}${request.nextUrl.pathname}${request.nextUrl.search}`;
 
-    return NextResponse.rewrite(new URL(apiUrl));
+      // Prepare headers for the backend request
+      const headers = new Headers(request.headers);
+
+      // Remove host and connection headers that might cause issues
+      headers.delete('host');
+      headers.delete('connection');
+
+      let body: BodyInit | null = null;
+
+      // For methods with body, read and forward it
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        const contentType = request.headers.get('content-type');
+
+        if (contentType?.includes('application/json')) {
+          // Read JSON body
+          const jsonBody = await request.json();
+          body = JSON.stringify(jsonBody);
+        } else {
+          // For other content types, use the stream
+          body = request.body;
+        }
+      }
+
+      // Forward the request to the backend
+      const response = await fetch(backendUrl, {
+        method: request.method,
+        headers,
+        body,
+      });
+
+      // Return the backend response
+      return new NextResponse(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+    } catch (error) {
+      console.error('[Middleware] API proxy error:', error);
+      return NextResponse.json(
+        { error: 'Failed to proxy request to backend' },
+        { status: 502 }
+      );
+    }
   }
 
   return NextResponse.next();
