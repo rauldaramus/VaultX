@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "format:files": "prettier --write",
     "format:check": "prettier --check .",
-    "quality": "npm run lint:all && npm run lint:fix && npm run format && npm run test:all",
+    "quality": "pnpm run lint:all && pnpm run lint:fix && pnpm run format && pnpm run test:all",
     "sonar": "npx sonarqube-scanner",
     "test:all": "nx run-many --target=test",
     "test:crypto": "tsx apps/vaultx-api/src/scripts/crypto-smoke.ts",
@@ -158,17 +158,17 @@
   ],
   "lint-staged": {
     "apps/**/*.{js,ts,jsx,tsx}": [
-      "npm run add-headers",
+      "pnpm run add-headers",
       "eslint --fix",
-      "npm run format "
+      "pnpm run format "
     ],
     "libs/**/*.{js,ts,jsx,tsx}": [
-      "npm run add-headers",
+      "pnpm run add-headers",
       "eslint --fix",
-      "npm run format"
+      "pnpm run format"
     ],
     "**/*.{json,css,scss,md,yml,yaml}": [
-      "npm run format"
+      "pnpm run format"
     ]
   }
 }

@@ -28,6 +28,11 @@ module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/vaultx-api'),
   },
+  resolve: {
+    alias: {
+      '@vaultx/shared': join(__dirname, '../../libs/shared/src/index.ts'),
+    },
+  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
@@ -37,7 +42,7 @@ module.exports = {
       assets: ['./src/assets'],
       optimization: false,
       outputHashing: 'none',
-      generatePackageJson: true,
+      generatePackageJson: false,
     }),
   ],
 };

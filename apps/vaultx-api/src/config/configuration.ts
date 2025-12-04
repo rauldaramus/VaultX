@@ -185,8 +185,8 @@ export const configuration = (): { config: AppConfig } => {
   const activeKid =
     jwtKeys.find(key => key.kid === fallbackKid)?.kid ?? jwtKeys[0].kid;
 
-  const apiVersion = process.env.API_VERSION ?? 'v1';
-  const globalPrefix = process.env.APP_GLOBAL_PREFIX ?? `api/${apiVersion}`;
+  // Force v1 prefix if no explicit APP_GLOBAL_PREFIX is set
+  const globalPrefix = process.env.APP_GLOBAL_PREFIX ?? 'api/v1';
 
   return {
     config: {

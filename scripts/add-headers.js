@@ -1,8 +1,9 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 // Leer package.json para obtener la versión
-const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+const packageJsonPath = path.resolve(process.cwd(), 'package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const packageVersion = packageJson.version;
 
 const year = new Date().getFullYear();
@@ -34,26 +35,46 @@ function generateHeader(filename) {
 `;
 }
 
-function agregarHeader(dir) {
-  const files = fs.readdirSync(dir);
+function agregarHeader(target) {
+  if (!fs.existsSync(target)) {
+    console.warn(`Ruta no encontrada, se omite: ${target}`);
+    return;
+  }
 
-  for (const file of files) {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
+  const stat = fs.statSync(target);
+  if (stat.isDirectory()) {
+    const ignoredDirs = new Set([
+      'node_modules',
+      '.next',
+      '.git',
+      '.turbo',
+      'dist',
+      'build',
+    ]);
 
-    if (stat.isDirectory()) {
-      agregarHeader(filePath);
-    } else if (/\.(js|ts|jsx|tsx)$/.test(file)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      if (!content.startsWith('/**')) {
-        // evita duplicados
-        const header = generateHeader(file);
-        fs.writeFileSync(filePath, header + content, 'utf8');
-        console.log(`Cabecera agregada a: ${filePath}`);
-      }
+    if (ignoredDirs.has(path.basename(target))) {
+      return;
     }
+
+    const files = fs.readdirSync(target);
+    for (const file of files) {
+      agregarHeader(path.join(target, file));
+    }
+    return;
+  }
+
+  if (!/\.(js|ts|jsx|tsx)$/.test(path.basename(target))) {
+    return;
+  }
+
+  const content = fs.readFileSync(target, 'utf8');
+  if (!content.startsWith('/**')) {
+    const header = generateHeader(path.basename(target));
+    fs.writeFileSync(target, header + content, 'utf8');
+    console.log(`Cabecera agregada a: ${target}`);
   }
 }
 
-// Carpetas principales de Nx
-['apps', 'libs'].forEach(folder => agregarHeader(`./${folder}`));
+const cliTargets = process.argv.slice(2).filter(target => target !== '--');
+const targets = cliTargets.length ? cliTargets : ['apps', 'libs'];
+targets.forEach(folder => agregarHeader(path.resolve(folder)));
